@@ -1,0 +1,119 @@
+<!-- templates/navbar.html -->
+{{define "navbar"}}
+<body class="bg-green-300 sm:bg-red-400 md:bg-gray-400 lg:bg-blue-400 xl:bg-yellow-400 2xl:bg-slate-500 dark:bg-gray-900">
+	<style>
+	ul.breadcrumb li+li::before {
+		content: "\276F";
+		padding-left: 8px;
+		padding-right: 4px;
+		color: inherit;
+	}
+	
+	ul.breadcrumb li span {
+		opacity: 60%;
+	}
+	
+	#sidebar {
+		-webkit-transition: all 300ms cubic-bezier(0, 0.77, 0.58, 1);
+		transition: all 300ms cubic-bezier(0, 0.77, 0.58, 1);
+	}
+	
+	#sidebar.show {
+		transform: translateX(0);
+	}
+	
+	#sidebar ul li a.active {
+		background: #1f2937;
+		background-color: #1f2937;
+	}
+	</style>
+	<!-- Navbar start -->
+    <nav id="navbar" class="fixed top-0 z-40 flex w-full flex-row justify-end bg-gray-600 px-8 sm:justify-between">
+        <div class="flex space-x-4">
+            <img src="./assets/logo.svg" alt="Logo" width="100">
+        </div>
+        <div class="flex space-x-4 items-center justify-center">
+            <div style="height:2.5rem" class="bg-gray-600 flex mt-2 rounded-full font-bold text-sm">
+                <div style="height:2.5rem" class="flex items-center rounded-full bg-red-700 text-white text-sm font-bold px-4 py-3 w-full" role="status">
+                    <svg class="w-6 h-6 text-white dark:text-white mr-2" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z"/>
+                    </svg>
+                    <p class="whitespace-normal break-words">{{.content}}</p>
+                </div>
+            </div>
+            <div style="height:2.5rem" class="bg-gray-600 flex mt-2 rounded-full font-bold text-sm">
+                <svg class="fill-green-100 absolute ml-3 mt-2" width="24" viewBox="0 0 24 24">
+                    <path d="M20.822 18.096c-3.439-.794-6.64-1.49-5.09-4.418 4.72-8.912 1.251-13.678-3.732-13.678-5.082 0-8.464 4.949-3.732 13.678 1.597 2.945-1.725 3.641-5.09 4.418-3.073.71-3.188 2.236-3.178 4.904l.004 1h23.99l.004-.969c.012-2.688-.092-4.222-3.176-4.935z" />
+                </svg>
+                <span class="text-green-100 px-3 text-sm font-bold mt-2.5 ml-8 mr-1">{{.user}}</span>
+            </div>
+				<form action="/logout" method="post">
+					<div class="flex justify-center items-center mt-2">
+						<button type="submit" class="text-white bg-sky-600 hover:bg-sky-700 hover:-translate-y-1 transition-all duration-500 focus:outline-none focus:ring-200 focus:ring-sky-700 font-medium rounded-full text-sm px-5 py-2.5 text-center mr-2 mb-2 dark:bg-sky-600 dark:hover:bg-sky-700 dark:focus:ring-sky-500">Log Out</button>
+					</div>
+				</form>	
+			<button id="btnSidebarToggler" type="button" class="py-4 text-2xl text-white hover:text-gray-200">
+				<svg id="navClosed" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-8 w-8">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /> </svg>
+				<svg id="navOpen" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="hidden h-8 w-8">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /> </svg>
+			</button>
+        </div>
+	</nav>
+	<!-- Navbar end -->
+	<!-- Sidebar start-->
+	<div id="containerSidebar" class="z-40">
+		<div class="navbar-menu relative z-40">
+			<nav id="sidebar" class="fixed left-0 bottom-0 flex w-3/4 -translate-x-full flex-col overflow-y-auto bg-gray-500 pt-6 pb-8 sm:max-w-xs lg:w-80">
+				<!-- one category / navigation group -->
+				<div class="px-4 pb-6">
+					<h3 class="mb-2 text-sm font-medium uppercase text-green-200">
+                    Main
+                    </h3>
+					<ul class="mb-8 text-sm font-medium">
+						<li>
+							<a class="active flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#homepage"> <span class="select-none">Homepage</span> </a>
+						</li>
+						<li>
+							<a class="flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#link1"> <span class="select-none">link1</span> </a>
+						</li>
+					</ul>
+				</div>
+				<!-- navigation group end-->
+				<!-- example copies start -->
+				<div class="px-4 pb-6">
+					<h3 class="mb-2 text-xs font-medium uppercase text-green-200">
+                        Legal
+                    </h3>
+					<ul class="mb-8 text-sm font-medium">
+						<li>
+							<a class="flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#tc"> <span class="select-none">Terms and Condition</span> </a>
+						</li>
+						<li>
+							<a class="flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#privacy"> <span class="select-none">Privacy policy</span> </a>
+						</li>
+						<li>
+							<a class="flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#imprint"> <span class="select-none">Imprint</span> </a>
+						</li>
+					</ul>
+				</div>
+				<div class="px-4 pb-6">
+					<h3 class="mb-2 text-xs font-medium uppercase text-gray-500">
+                    Others
+                </h3>
+					<ul class="mb-8 text-sm font-medium">
+						<li>
+							<a class="flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#ex1"> <span class="select-none">...</span> </a>
+						</li>
+						<li>
+							<a class="flex items-center rounded py-3 pl-3 pr-4 text-gray-50 hover:bg-gray-600" href="#ex2"> <span class="select-none">...</span> </a>
+						</li>
+					</ul>
+				</div>
+				<!-- example copies end -->
+			</nav>
+		</div>
+		<div class="mx-auto lg:ml-80"></div>
+	</div>
+	<!-- Sidebar end -->
+{{end}}
