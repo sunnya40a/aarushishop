@@ -1,9 +1,9 @@
 package routes
 
 import (
-	"github.com/gin-gonic/gin"
-
 	controllers "aarushishop/controllers"
+
+	"github.com/gin-gonic/gin"
 )
 
 // PublicRoutes registers the public routes.

@@ -1,13 +1,14 @@
 package controllers
 
 import (
-	globals "aarushishop/globals"
-	helpers "aarushishop/helpers"
 	"log"
 	"net/http"
 
+	globals "aarushishop/globals"
+	helpers "aarushishop/helpers"
+
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin" // Import the "context" package
 )
 
 const (
@@ -45,6 +46,7 @@ func LoginPostHandler() gin.HandlerFunc {
 			return
 		}
 
+		// Check user credentials without using ctx
 		if !helpers.CheckUserPass(username, password) {
 			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "Incorrect username or password."})
 			return
