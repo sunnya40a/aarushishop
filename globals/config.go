@@ -10,7 +10,7 @@ import (
 )
 
 // For session
-var Secret = []byte("secret")
+var Secret = []byte("YUcD6G8qzz/zwb5nxd6Z1/Uj8x7Q5F1C+JALBfEfjZEYfhYSLyrCVBS/uxWxmESA")
 
 const Userkey = "user"
 

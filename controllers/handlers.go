@@ -8,13 +8,29 @@ import (
 	helpers "aarushishop/helpers"
 
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-gonic/gin" // Import the "context" package
+	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-gonic/gin"
 )
 
 const (
 	LoginTemplate     = "login.tmpl"
 	DashboardTemplate = "dashboard.tmpl"
 )
+
+// Initialize a secure cookie store
+var store = cookie.NewStore([]byte(globals.Secret))
+
+func init() {
+	// Set session options for security
+	secureCookie := true // Set to true if you're using HTTPS
+	httpOnlyCookie := true
+
+	store.Options(sessions.Options{
+		Secure:   secureCookie,   // Set to true if you're using HTTPS
+		HttpOnly: httpOnlyCookie, // Set to true to make cookies accessible only via HTTP
+		SameSite: http.SameSiteStrictMode,
+	})
+}
 
 // LoginGetHandler handles the GET request for the login page
 func LoginGetHandler() gin.HandlerFunc {
@@ -54,6 +70,12 @@ func LoginPostHandler() gin.HandlerFunc {
 
 		session := sessions.Default(c)
 		session.Set(globals.Userkey, username)
+
+		// Set the session expiration time (15 minutes in this example)
+		session.Options(sessions.Options{
+			MaxAge: 5 * 60, // 5 minutes in seconds
+		})
+
 		if err := session.Save(); err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err)
 			return

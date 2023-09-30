@@ -1,1 +1,6 @@
 app
+aarushishop.code-workspace
+aarushishop
+.gitignore
+Dockerfile
+fly.toml
