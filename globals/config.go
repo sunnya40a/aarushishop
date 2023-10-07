@@ -12,7 +12,7 @@ import (
 // For session
 var Secret = []byte("YUcD6G8qzz/zwb5nxd6Z1/Uj8x7Q5F1C+JALBfEfjZEYfhYSLyrCVBS/uxWxmESA")
 
-const Userkey = "user"
+const UserKey = "user"
 
 // AppConfig stores the application configuration.
 type AppConfig struct {
@@ -26,7 +26,7 @@ type AppConfig struct {
 
 // LoadConfig loads the application configuration from the config.json file.
 func LoadConfig() (*AppConfig, error) {
-	// Get the path to the config.json file (assuming it's in the globals folder)
+	// Get the path to the config.json file (assuming it's in the same directory as the executable)
 	configFile := filepath.Join("globals", "config.json")
 
 	// Read the contents of the config file

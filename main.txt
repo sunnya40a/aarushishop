@@ -4,9 +4,8 @@ package main
 
 import (
 	"aarushishop/database"
-	"aarushishop/globals"
-	"aarushishop/helpers"
-	"aarushishop/middleware"
+	helpers "aarushishop/helpers"
+	"time"
 
 	//"context"
 	"fmt"
@@ -23,9 +22,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//var Secret = []byte("YUcD6G8qzz/zwb5nxd6Z1/Uj8x7Q5F1C+JALBfEfjZEYfhYSLyrCVBS/uxWxmESA")
+var Secret = []byte("YUcD6G8qzz/zwb5nxd6Z1/Uj8x7Q5F1C+JALBfEfjZEYfhYSLyrCVBS/uxWxmESA")
 
-//const UserKey = "user"
+const UserKey = "user"
 
 const (
 	LoginTemplate     = "login.tmpl"
@@ -42,13 +41,11 @@ func PublicRoutes(g *gin.RouterGroup) {
 
 func PrivateRoutes(g *gin.RouterGroup) {
 	// Apply the AuthMiddleware to protect these routes
-	g.Use(middleware.AuthMiddleware())
+	g.Use(AuthMiddleware())
 
 	// Define your private routes here
 	g.GET("/dashboard", DashboardGetHandler())
 	g.GET("/table", TableGetHandler())
-	g.GET("/logout", LogoutGetHandler())
-	g.POST("/logout", LogoutGetHandler())
 }
 
 func main() {
@@ -85,7 +82,7 @@ func main() {
 	//Print empty line.
 	fmt.Printf("\n")
 
-	store := cookie.NewStore(globals.Secret)
+	store := cookie.NewStore([]byte("your-secret-key"))
 	router.Use(sessions.Sessions("my-session", store))
 
 	// Create a route group for public routes (not requiring authentication)
@@ -98,13 +95,6 @@ func main() {
 
 	// Start the server and listen on port 8080
 	router.Run("0.0.0.0:8080")
-	//router.RunTLS(":8080", "./cert/localhost.crt", "./cert/localhost.key")
-
-	/* 	err = http.ListenAndServeTLS("0.0.0.0:8080", "./cert/localhost.crt", "./cert/localhost.key", router)
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	} */
-
 }
 
 //
@@ -112,7 +102,7 @@ func main() {
 
 func LoginPostHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("\nLog in post event activated")
+		log.Println("Log in post event activated")
 		username := c.PostForm("username")
 		password := c.PostForm("password")
 
@@ -136,7 +126,7 @@ func LoginPostHandler() gin.HandlerFunc {
 			Secure:   true, // Set to true if your application uses HTTPS
 			SameSite: http.SameSiteStrictMode,
 		})
-		session.Set(globals.UserKey, username)
+		session.Set(UserKey, username)
 
 		// Save the session (set the session cookie)
 		if err := session.Save(); err != nil {
@@ -151,7 +141,7 @@ func LoginPostHandler() gin.HandlerFunc {
 // LoginGetHandler handles the GET request for the login page
 func LoginGetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("\nLog in Get event activated")
+		log.Println("Log in Get event activated")
 		//		session := sessions.Default(c)
 		//		user := session.Get(globals.UserKey)
 		//		if user != nil {
@@ -182,7 +172,7 @@ func LogoutGetHandler() gin.HandlerFunc {
 // IndexGetHandler handles the GET request for the index page
 func IndexGetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("\nIndexGetHandler activated")
+		log.Println("IndexGetHandler activated")
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{})
 	}
 }
@@ -190,17 +180,18 @@ func IndexGetHandler() gin.HandlerFunc {
 // DashboardGetHandler handles the GET request for the dashboard page
 func DashboardGetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		user := session.Get(globals.UserKey)
+		log.Println("DashboardGetHandler activated")
+		/* 		session := sessions.Default(c)
+		   		user := session.Get(UserKey)
 
-		if user == nil {
-			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
-			return
-		}
+		   		if user == nil {
+		   			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
+		   			return
+		   		} */
 
 		c.HTML(http.StatusOK, DashboardTemplate, gin.H{
 			"content": "This is a dashboard",
-			"user":    user,
+			//"user":    user,
 		})
 	}
 }
@@ -209,7 +200,7 @@ func DashboardGetHandler() gin.HandlerFunc {
 func logoutUser(c *gin.Context) {
 	// Retrieve the user from the session
 	session := sessions.Default(c)
-	user := session.Get(globals.UserKey)
+	user := session.Get(UserKey)
 
 	if user == nil {
 		// Handle the case where the session is invalid or user is not logged in
@@ -218,7 +209,7 @@ func logoutUser(c *gin.Context) {
 	}
 
 	// Delete the user from the session
-	session.Delete(globals.UserKey)
+	session.Delete(UserKey)
 
 	// Save the session to remove the user's session cookie
 	if err := session.Save(); err != nil {
@@ -236,24 +227,24 @@ func logoutUser(c *gin.Context) {
 
 	// Redirect to the login page after successful logout
 	c.Redirect(http.StatusMovedPermanently, "/login")
-	log.Print("Logout Successful.")
 }
 
 func TableGetHandler() gin.HandlerFunc {
-	log.Println("\nTableGet Handler activated")
+	log.Println("TableGet Handler activated")
 	return func(c *gin.Context) {
-		session := sessions.Default(c)
-		user := session.Get(globals.UserKey)
-
-		if user == nil {
-			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
-			return
-		}
-
+		/* 		// Get the session and user information from the session.
+		   		session := sessions.Default(c)
+		   		user := session.Get(UserKey)
+		   		// Check if the user is not found in the session.
+		   		if user == nil {
+		   			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
+		   			return
+		   		}
+		   		log.Printf("user: %s", user) */
 		// If the user is found in the session, render the HTML page with user data.
 		c.HTML(http.StatusOK, "table.tmpl", gin.H{
-			//"content": "This is a dashboard",
-			"user": user,
+			"content": "This is a dashboard",
+			//	"user":    user,
 		})
 	}
 }
