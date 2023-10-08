@@ -97,8 +97,8 @@ func main() {
 	PrivateRoutes(private)
 
 	// Start the server and listen on port 8080
-	router.Run("0.0.0.0:8080")
-	//router.RunTLS(":8080", "./cert/localhost.crt", "./cert/localhost.key")
+	//router.Run("0.0.0.0:8080")
+	router.RunTLS(":8080", "./cert/localhost.crt", "./cert/localhost.key")
 
 	/* 	err = http.ListenAndServeTLS("0.0.0.0:8080", "./cert/localhost.crt", "./cert/localhost.key", router)
 	   	if err != nil {
