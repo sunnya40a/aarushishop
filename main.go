@@ -189,14 +189,19 @@ func LoginPostHandler() gin.HandlerFunc {
 // LoginGetHandler handles the GET request for the login page
 func LoginGetHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		log.Println("\nLog in Get event activated")
-		//		session := sessions.Default(c)
-		//		user := session.Get(globals.UserKey)
-		//		if user != nil {
-		//			log.Printf("Authorized user tried to access the login page again: %v", user)
-		//			c.Redirect(http.StatusFound, "/logout") // Redirect to the logout page
-		//			return
-		//		}
+		session := sessions.Default(c)
+		user := session.Get(globals.UserKey)
+
+		// You can check if the user is already authenticated and redirect them to the dashboard
+		// or simply show the login page.
+		if user != nil {
+			c.HTML(http.StatusOK, DashboardTemplate, gin.H{
+				"content": "Your session is still valid",
+				"user":    user,
+			})
+			return
+		}
+		// If the user is not authenticated, show the login page with a "200 OK" status code.
 		c.HTML(http.StatusOK, LoginTemplate, gin.H{})
 	}
 }
