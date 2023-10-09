@@ -237,8 +237,8 @@ func DashboardGetHandler() gin.HandlerFunc {
 		}
 
 		c.HTML(http.StatusOK, DashboardTemplate, gin.H{
-			"content": "This is a dashboard",
-			"user":    user,
+			//"content": "This is a dashboard",
+			"user": user,
 		})
 	}
 }
@@ -269,7 +269,7 @@ func logoutUser(c *gin.Context) {
 	// Replace this with your actual database close logic
 
 	// Redirect to the login page after successful logout
-	c.Redirect(http.StatusMovedPermanently, "/login")
+	c.Redirect(http.StatusMovedPermanently, "/")
 	log.Print("Logout Successful.")
 }
 

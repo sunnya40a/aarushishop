@@ -7,7 +7,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
+
+var CopyrightYear = time.Now().Year()
 
 // For session
 var Secret = []byte("YUcD6G8qzz/zwb5nxd6Z1/Uj8x7Q5F1C+JALBfEfjZEYfhYSLyrCVBS/uxWxmESA")
@@ -43,4 +46,8 @@ func LoadConfig() (*AppConfig, error) {
 
 	log.Printf("==> %v", config)
 	return &config, nil
+}
+
+func Copyright() int {
+	return CopyrightYear
 }

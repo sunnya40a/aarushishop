@@ -3,12 +3,14 @@
 	<footer class="bg-gray-400 py-4 text-center">
 		<div class="flex flex-wrap items-center md:justify-between justify-center">
 			<div class="w-full md:w-4/12 px-4 mx-auto text-center">
-				<div class="text-sm text-black font-semibold py-1"> Copyright © 2021 <a href="http://www.chhabi.com" class="text-indigo-800 hover:text-gray-800" target="_blank"> Chhabi Chalise </a> </div>
+				<div class="text-sm text-black font-semibold py-1"> Copyright © <span id="currentYear"></span> <a href="http://www.chhabi.com" class="text-indigo-800 hover:text-gray-800" target="_blank"> Chhabi Chalise </a> </div>
 			</div>
 		</div>
-		<p>&copy; 2023 Your Website. All rights reserved.</p>
+		<p>&copy; <span id="currentYear2"></span> Your Website. All rights reserved.</p>
 	</footer>
 	<script>
+	document.getElementById("currentYear").textContent = new Date().getFullYear();
+		document.getElementById("currentYear2").textContent = new Date().getFullYear();
 	document.addEventListener("DOMContentLoaded", () => {
 		const navbar = document.getElementById("navbar");
 		const sidebar = document.getElementById("sidebar");
