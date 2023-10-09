@@ -12,6 +12,7 @@ import (
 )
 
 // CheckUserPass checks if the given username and password are valid
+// CheckUserPass checks if the given username and password are valid
 func CheckUserPass(username, password string) bool {
 	// Check if the username and password are empty
 	if EmptyUserPass(username, password) {
@@ -19,21 +20,22 @@ func CheckUserPass(username, password string) bool {
 	}
 
 	// Get a database connection from the pool
-	database.ConnectToDB()
-	db := database.GetDB()
-	if db == nil {
+	db, err := database.GetDBConnection()
+	if err != nil {
 		log.Println("Error: failed to obtain a database connection to check pass.")
 		return false
 	}
+	defer db.Release()
 
 	// Query the database to find the user's hashed password
 	var hashedPassword string
-	err := db.QueryRow(context.Background(), "SELECT password_hash FROM users WHERE username = $1", username).Scan(&hashedPassword)
+	err = db.QueryRow(context.Background(), "SELECT password_hash FROM users WHERE username = $1", username).Scan(&hashedPassword)
 	if err != nil {
 		log.Println("Error querying the database:", err)
 		return false
 	}
 	log.Println("Query OK")
+
 	// Compare the hashed password with the provided password using bcrypt
 	err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 	if err != nil {

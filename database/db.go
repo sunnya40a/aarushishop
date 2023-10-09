@@ -1,59 +1,59 @@
-//* database/db.go
+// database/db.go
+
+// * postgres://chhabi:0hzwAcutBoSeC0rqV0bQ8PVbsB5at1TL@dpg-ck673fj6fquc73ddjncg-a.singapore-postgres.render.com:5432/school_y6lf?sslmode=prefer
 
 package database
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"time"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pkg/errors"
-
-	"aarushishop/globals"
 )
 
-var db *pgx.Conn
+var dbPool *pgxpool.Pool
 
-// ConnectToDB establishes a connection to the PostgreSQL database.
-func ConnectToDB() (*pgx.Conn, error) {
-	if db != nil {
-		// If a connection already exists, return it
-		return db, nil
-	}
+// InitDBPool initializes the database connection pool.
+func InitDBPool() error {
+	connStr := "postgres://chhabi:0hzwAcutBoSeC0rqV0bQ8PVbsB5at1TL@dpg-ck673fj6fquc73ddjncg-a.singapore-postgres.render.com:5432/school_y6lf?sslmode=prefer"
 
-	config, err := globals.LoadConfig()
+	// Create a new connection pool configuration
+	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to load configuration")
+		return errors.Wrap(err, "failed to parse connection string")
 	}
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		config.DBHost, config.DBPort, config.DBUser, config.DBPassword, config.DBName, config.DBSSLMode)
-	log.Printf("connection : %s", connStr)
+	// Customize connection pool size (adjust as needed)
+	config.MaxConns = 10 // Set your desired maximum connection pool size
 
-	conn, err := pgx.Connect(context.Background(), connStr)
+	// Customize connection pool cleanup (set idle timeout)
+	config.MaxConnIdleTime = 5 * time.Minute // Close idle connections after 5 minutes
+
+	// Create a new connection pool using the parsed configuration
+	dbPool, err = pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to connect to the database")
+		return errors.Wrap(err, "failed to connect to the database")
 	}
 
-	db = conn
 	log.Printf("Connected to the database")
-	return db, nil
-}
-
-// GetDB returns the PostgreSQL database connection.
-func GetDB() *pgx.Conn {
-	return db
-}
-
-// CloseDB closes the PostgreSQL database connection.
-func CloseDB() error {
-	if db != nil {
-		if err := db.Close(context.Background()); err != nil {
-			log.Printf("Failed to close the database connection: %v", err)
-			return err
-		}
-		log.Printf("Closed the database connection")
-	}
 	return nil
+}
+
+// GetDBConnection returns a connection from the database pool.
+func GetDBConnection() (*pgxpool.Conn, error) {
+	conn, err := dbPool.Acquire(context.Background())
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to acquire database connection")
+	}
+	return conn, nil
+}
+
+// CloseDBPool closes the database connection pool.
+func CloseDBPool() {
+	if dbPool != nil {
+		dbPool.Close()
+		log.Printf("Closed the database connection pool")
+	}
 }

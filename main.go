@@ -7,6 +7,10 @@ import (
 	"aarushishop/globals"
 	"aarushishop/helpers"
 	"aarushishop/middleware"
+	"context"
+	"os/signal"
+	"syscall"
+	"time"
 
 	//"context"
 	"fmt"
@@ -22,10 +26,6 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 )
-
-//var Secret = []byte("YUcD6G8qzz/zwb5nxd6Z1/Uj8x7Q5F1C+JALBfEfjZEYfhYSLyrCVBS/uxWxmESA")
-
-//const UserKey = "user"
 
 const (
 	LoginTemplate     = "login.tmpl"
@@ -52,6 +52,13 @@ func PrivateRoutes(g *gin.RouterGroup) {
 }
 
 func main() {
+
+	if err := database.InitDBPool(); err != nil {
+		// Handle the error if the pool initialization fails
+		// You might want to log the error and exit the application gracefully
+		// or take other appropriate actions
+		panic(err)
+	}
 	// Create a Gin router instance
 	router := gin.Default()
 
@@ -96,15 +103,46 @@ func main() {
 	private := router.Group("/")
 	PrivateRoutes(private)
 
+	// Close the database connection pool when your application exits
+	defer database.CloseDBPool()
 	// Start the server and listen on port 8080
 	//router.Run("0.0.0.0:8080")
-	router.RunTLS(":8080", "./cert/localhost.crt", "./cert/localhost.key")
+	//router.RunTLS(":8080", "./cert/localhost.crt", "./cert/localhost.key")
+	// Start the server in a separate goroutine
+	server := &http.Server{
+		Addr:    "0.0.0.0:8080",
+		Handler: router,
+	}
 
-	/* 	err = http.ListenAndServeTLS("0.0.0.0:8080", "./cert/localhost.crt", "./cert/localhost.key", router)
-	   	if err != nil {
-	   		log.Fatal(err)
-	   	} */
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
 
+	// Capture shutdown signals (Ctrl+C and SIGTERM)
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
+
+	// Block until a shutdown signal is received
+	sig := <-signalChannel
+	fmt.Printf("Received signal: %v\n", sig)
+
+	// Create a context with a timeout for graceful shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// Gracefully shut down the server
+	if err := server.Shutdown(ctx); err != nil {
+		log.Printf("Server shutdown error: %v", err)
+	}
+
+	// Close database connections and perform cleanup here
+	database.CloseDBPool()
+
+	// Optionally, add more cleanup actions as needed
+
+	log.Println("Application gracefully terminated")
 }
 
 //
@@ -229,10 +267,6 @@ func logoutUser(c *gin.Context) {
 	// Close the database connection (replace with your database close logic)
 	// Assuming you have a function CloseDB() to close the database connection
 	// Replace this with your actual database close logic
-	if err := database.CloseDB(); err != nil {
-		c.AbortWithError(http.StatusInternalServerError, err)
-		return
-	}
 
 	// Redirect to the login page after successful logout
 	c.Redirect(http.StatusMovedPermanently, "/login")
