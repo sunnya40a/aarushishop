@@ -3,7 +3,6 @@ package middleware
 
 import (
 	"aarushishop/globals"
-	"fmt"
 	"log"
 	"net/http"
 
@@ -22,7 +21,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			// User is not authenticated or session expired
 			//c.Redirect(http.StatusSeeOther, "/login")
 			c.HTML(http.StatusSeeOther, "login.tmpl", gin.H{
-				"content": fmt.Sprintf("User is not authenticated. %s.", user),
+				"content": "You are not authorized. Please log in",
 			})
 			c.Abort()
 			return
