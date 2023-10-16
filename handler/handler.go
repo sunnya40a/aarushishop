@@ -38,6 +38,7 @@ func PrivateRoutes(g *gin.RouterGroup) {
 	g.GET("/table", TableGetHandler())
 	g.GET("/logout", LogoutGetHandler())
 	g.POST("/logout", LogoutGetHandler())
+	g.GET("/testing", TestingGetHandler())
 }
 
 func LoginPostHandler() gin.HandlerFunc {
@@ -188,3 +189,71 @@ func TableGetHandler() gin.HandlerFunc {
 		})
 	}
 }
+
+func TestingGetHandler() gin.HandlerFunc {
+	log.Println("\nTesting Handler activated")
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		user := session.Get(globals.UserKey)
+
+		if user == nil {
+			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
+			return
+		}
+
+		// If the user is found in the session, render the HTML page with user data.
+		c.HTML(http.StatusOK, "vue.tmpl", gin.H{
+			//"content": "This is a dashboard",
+		// You can pass any data that your Vue.js template may need here.
+		// For example, if you need to pass the user data:			
+			"user": user,
+		})
+	}
+}
+
+/* func TestingGetHandler() gin.HandlerFunc {
+	log.Println("\nTesting Handler activated")
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		user := session.Get(globals.UserKey)
+
+		if user == nil {
+			c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
+			return
+		}
+
+		// Connect to the database (assuming you've set up the DB connection)
+		dbConn, err := database.GetDBConnection()
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Database connection error"})
+			return
+		}
+		defer dbConn.Release()
+
+		// Execute the SQL query to fetch data from the "users" table
+		rows, err := dbConn.Query(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
+		if err != nil {
+			c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Failed to fetch data from the database"})
+			return
+		}
+		defer rows.Close()
+
+		// Create a slice to store the user data
+		var users []model.User // Replace "model.User" with the struct type that matches your user data
+
+		// Iterate through the query results and append them to the slice
+		for rows.Next() {
+			model.user
+			var user model.User // Replace "model.User" with the struct type that matches your user data
+			if err := rows.Scan(&user.UserID, &user.Username, &user.Email, &user.PasswordHash, &user.Comment); err != nil {
+				c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Error scanning user data"})
+				return
+			}
+			users = append(users, user)
+		}
+
+		c.HTML(http.StatusOK, "vue.tmpl", gin.H{
+			"users": users,
+		})
+	}
+} */

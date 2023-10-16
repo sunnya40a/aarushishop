@@ -6,6 +6,8 @@ import (
 	"aarushishop/database"
 	"aarushishop/globals"
 	"aarushishop/handler"
+
+	//"aarushishop/model"
 	"context"
 	"os/signal"
 	"syscall"
@@ -26,33 +28,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-/*
-const (
-
-	LoginTemplate     = "login.tmpl"
-	DashboardTemplate = "dashboard.tmpl"
-	TableTemplate     = "table.tmpl"
-
-)
-
-	func PublicRoutes(g *gin.RouterGroup) {
-		// Public routes (do not require authentication)
-		g.GET("/login", LoginGetHandler())
-		g.POST("/login", LoginPostHandler())
-		g.GET("/", IndexGetHandler())
-	}
-
-	func PrivateRoutes(g *gin.RouterGroup) {
-		// Apply the AuthMiddleware to protect these routes
-		g.Use(middleware.AuthMiddleware())
-
-		// Define your private routes here
-		g.GET("/dashboard", DashboardGetHandler())
-		g.GET("/table", TableGetHandler())
-		g.GET("/logout", LogoutGetHandler())
-		g.POST("/logout", LogoutGetHandler())
-	}
-*/
 func main() {
 
 	if err := database.InitDBPool(); err != nil {
@@ -66,6 +41,7 @@ func main() {
 
 	// Serve static files from the "assets" directory
 	router.Static("/assets", "./assets")
+	router.Static("/static", ".static")
 	router.Static("/favicon.ico", "./assets/favicon.ico")
 
 	// Load HTML templates from the "templates" directory
