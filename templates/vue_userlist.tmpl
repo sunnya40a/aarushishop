@@ -1,0 +1,66 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>User Data</title>
+    <!-- Include Vue.js from a CDN -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script> -->
+    <!-- <script src ="./assets/vue.min.js.js"></script> -->
+    <script src ="./assets/vue2.7.1.4.js"></script>
+
+    <!-- Include Axios for making HTTP requests -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
+    <script src="./assets/axios.1.5.1.min.js"></script>
+
+    <!-- Include Tailwind Js for CSS -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script>  -->
+    <script src="./assets/Tailwind.3.3.3.3.js"></script>
+</head>
+<body>
+    <div id="vue-app" class="p-4">
+        <h1 class="text-2xl font-semibold mb-4">User Data</h1>
+        <div class="shadow overflow-hidden rounded border-b border-gray-200">
+            <table class="min-w-full bg-white">
+                <thead class="bg-gray-800 text-white">
+                    <tr>
+                        <th class="text-left py-3 px-4 font-semibold">UserID</th>
+                        <th class="text-left py-3 px-4 font-semibold">Username</th>
+                        <th class="text-left py-3 px-4 font-semibold">Email</th>
+                        <th class="text-left py-3 px-4 font-semibold">Comment</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="user in users" :key="user.UserID" class="hover:bg-gray-100">
+                        <td class="py-3 px-4">[[ user.UserID ]]</td>
+                        <td class="py-3 px-4">[[ user.Username ]]</td>
+                        <td class="py-3 px-4">[[ user.Email ]]</td>
+                        <td class="py-3 px-4">[[ user.Comment ]]</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        new Vue({
+            el: '#vue-app',
+            delimiters: ['[[', ']]'],
+            data: {
+                users: []
+            },
+            mounted: function() {
+                // Make an AJAX request to your Go server
+                axios.get('/api/listusers')
+                    .then(response => {
+                        this.users = response.data.user;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
+
