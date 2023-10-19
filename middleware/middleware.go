@@ -26,7 +26,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		log.Print("\nSession middleware activated\n")
+		log.Print("\n============\nSession middleware activated\n")
 		// If the session is not expired, renew it by 15 minutes
 		session.Options(sessions.Options{
 			MaxAge:   900, // 15 minutes in seconds
