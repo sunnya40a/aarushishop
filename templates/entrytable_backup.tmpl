@@ -1,0 +1,261 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Data Entry</title>
+    <!-- Include Vue.js from a CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+
+    <!-- Include Axios for making HTTP requests -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.21.4/dist/axios.min.js"></script>
+    <!-- <link rel="stylesheet" type="text/css" href="./assets/style.css"> -->
+    <script src="./assets/Tailwind.3.3.3.3.js"></script>
+</head>
+<body class="bg-gray-300 p-4 m-5">
+    <h1 class="text-2xl font-semibold mb-4">User Data Vue learn table</h1>
+      <div id="vue-app" class="bg-white p-4 rounded-md shadow-xl">
+        <!--- Add User form -->
+        <div id="add-form" class="flex justify-center items-center h-screen bg-gray-300 border-b-zinc-950 fixed top-0 left-0 right-0 bottom-0 opacity-100 z-50"  v-if="isAddFormVisible">
+            <div class="p-4 rounded justify-center bg-white border-x-stone-900">
+                <h2 class="text-2xl font-semibold mb-4">Add New User</h2>
+                <form @submit.prevent="saveUser" method="POST" action="/api/users">
+                    <div class="form-group">
+                        <label for="client_id">User ID</label>
+                        <input type="text" id="client_id" ref="client_id_input" v-model="newUser.client_id" class="form-control required mt-1 text-gray-900 rounded-xl bg-gray-200 pl-2 py-2 focus:border-blue-500">
+                    </div>
+                    <div class="mt-4"></div>
+                    <div class="form-group">
+                        <label for="uname">User Name</label>
+                        <input type="text" id="uname" v-model="newUser.uname" class="form-control required mt-1 text-gray-900 rounded-xl bg-gray-200 pl-2 py-2 focus:border-blue-500">
+                    </div>
+                    <div class="text-right mt-4">
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-0.5 px-4 rounded-full mr-2">Save</button>
+                        <button type="button" @click="closeAddForm"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-0.5 px-4 rounded-full">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div> 
+        <!-- Add user completed-->
+        <!-- Edit user start -->
+        <div id="edit-form" class="flex justify-center items-center h-screen bg-gray-300 border-b-zinc-950 fixed top-0 left-0 right-0 bottom-0 opacity-100 z-50" v-if="isEditFormVisible">
+            <div class="p-4 rounded bg-white">
+                <h2 class="text-2xl font-semibold mb-4">Edit User</h2>
+                <form @submit.prevent="updateUser" method="PUT" action="/api/users">
+                    <div class="form-group">
+                        <label for="client_id">User ID</label>
+                        <input type="text" id="client_id" v-model="editedUser.client_id" class="form-control required mt-1 text-gray-900 rounded-xl bg-gray-200 pl-2 py-2 focus:border-blue-500" disabled>
+                    </div>
+                    <div class="mt-4"></div>
+                    <div class="form-group">
+                        <label for="uname">User Name</label>
+                        <input type="text" id="uname" ref="client_name_input" v-model="editedUser.uname" class="form-control required mt-1 text-gray-900 rounded-xl bg-gray-200 pl-2 py-2 focus:border-blue-500">
+                    </div>
+                    <div class="text-right mt-4">
+                        <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-0.5 px-4 rounded-full mr-2">Save</button>
+                        <button type="button" @click="closeEditForm"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-0.5 px-4 rounded-full">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Edit user completed -->
+        <!-- Data list Started -->
+        <div class="relative inset-0 z-0">
+            <div class="relative overflow-x-auto shadow-md sm:rounded-lg">
+                <table class="table-fixed w-full text-m text-left text-gray-500 dark:text-gray-800">
+                    <thead class="text-l text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+                        <tr>
+                            <th class="border-r text-center py-3 px-4 font-semibold">User ID</th>
+                            <th class="border-r text-center py-3 px-4 font-semibold">User</th>
+                            <th class="border-r text-center py-3 px-4 font-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="user in users" :key="user.client_id" class="hover:bg-blue-400">
+                            <td class="border-r py-1 px-4">[[ user.client_id ]]</td>
+                            <td class="border-r py-1 px-4">[[ user.uname ]]</td>
+                            <td class="border-r py-1 px-4 flex justify-center items-center">
+                                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-0.5 px-4 rounded"
+                                    @click="editUser(user)">Edit</button>
+                                <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-0.5 px-4 rounded ml-2"
+                                    @click="deleteUser(user)">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <!-- Data list Completed -->
+            <!-- +Add Button -->
+            <div class="text-center mt-4 relative z-0">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded"
+                    @click="showAddForm">+ Add</button>
+            </div>
+        </div>
+        <div id="status-message" class="fixed top-0 right-0 m-4 p-4 hidden">
+            <div :class="statusClass">
+                <span id="status-text">[[ message ]]</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        new Vue({
+            el: '#vue-app',
+            delimiters: ['[[', ']]'],
+            data: {
+                users: [],
+                newUser: {
+                    client_id: '',
+                    uname: '',
+                },
+                editedUser: {
+                    client_id: '',
+                    uname: '',
+                },
+                isSuccess: true,
+                message: '',
+                isAddFormVisible: false,
+                isEditFormVisible: false,
+            },
+
+            computed: {
+                statusClass() {
+                    return this.isSuccess ? 'bg-green-400 text-white p-2 rounded' : 'bg-red-400 text-white p-2 rounded';
+                },
+            },
+
+            methods: {
+                showStatusMessage(message, success = true) {
+                    this.message = message;
+                    this.isSuccess = success;
+
+                    // Show the status message
+                    const statusMessage = document.getElementById('status-message');
+                    statusMessage.style.display = 'block';
+
+                    // Automatically hide the message after a few seconds
+                    setTimeout(() => {
+                        statusMessage.style.display = 'none';
+                    }, 3000); // Adjust as needed
+                },
+
+                editUser(user) {
+                    this.editedUser = { ...user };
+                    this.isEditFormVisible = true;
+                    this.$nextTick(() => {
+                    this.$refs.client_name_input.focus();
+                });
+                   
+                },
+
+                updateUser() {
+                    // Parse the client_id as an integer
+                    this.editedUser.client_id = parseInt(this.editedUser.client_id);
+                    
+                    // Make an AJAX PUT or PATCH request to update the user data
+                    axios
+                        .put(`/api/users/${this.editedUser.client_id}`, this.editedUser)
+                        .then(() => {
+                            // Find and update the user in the local users array
+                            const index = this.users.findIndex(u => u.client_id === this.editedUser.client_id);
+                            if (index !== -1) {
+                                this.users[index] = { ...this.editedUser };
+                                this.showStatusMessage('User updated successfully.', true);
+                            }
+                            
+                            this.isEditFormVisible = false; // Close the edit data form
+                        })
+                        .catch(error => {
+                            console.error('Error updating user:', error);
+                            this.showStatusMessage('Error! Updating a user was unsuccessful.', false);
+                        });
+                },
+
+                closeEditForm() {
+                    this.isEditFormVisible = false;
+                },
+
+                deleteUser(user) {
+                    const isConfirmed = window.confirm(`Are you sure you want to delete the user with ID ${user.client_id}?`);
+                    if (isConfirmed) {
+                        axios
+                            .delete(`/api/users/${user.client_id}`)
+                            .then(() => {
+                                this.users = this.users.filter(u => u.client_id !== user.client_id);
+                                this.showStatusMessage('User deleted successfully.', true);
+                            })
+                            .catch(error => {
+                                console.error('Error deleting user:', error);
+                                this.showStatusMessage('Error! Deleting a user was unsuccessful.', false);
+                            });
+                    }
+                },
+
+                saveUser() {
+                    // Parse the client_id as an integer
+                    this.newUser.client_id = parseInt(this.newUser.client_id);
+
+                    // Create a data object from the newUser fields
+                    const sdata = {
+                        client_id: this.newUser.client_id,
+                        uname: this.newUser.uname
+                    };
+                    fetch('/api/users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(sdata)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                // Handle errors for non-2xx response codes
+                                throw new Error('Error saving user data');
+                            }
+                            return response.json();
+                        })
+                        .then(sdata => {
+                            console.log(sdata);
+                            this.users.push(sdata);
+                            this.newUser.client_id = '';
+                            this.newUser.uname = '';
+                            this.showStatusMessage('User created successfully.', true);
+                        })
+                        .catch(error => {
+                            console.error('Error saving user data:', error);
+                            this.showStatusMessage('Error! Creating a user was unsuccessful.', false);
+                        });
+                    this.isAddFormVisible = false; // Close the add data form
+                },
+
+                showAddForm() {
+                    this.isAddFormVisible = true;
+                        this.$nextTick(() => {
+                        this.$refs.client_id_input.focus();
+                    });
+                },
+
+                closeAddForm() {
+                    this.isAddFormVisible = false;
+                },
+            },
+
+            mounted: function () {
+                axios.get('/api/users')
+                    .then(response => {
+                        this.users = response.data.user;
+                        this.showStatusMessage('Table data fetched successfully.', true);
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                        this.showStatusMessage('Error! Could not fetch data from the server.', false);
+                    });
+            },
+        });
+    </script>
+</body>
+</html>

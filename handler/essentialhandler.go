@@ -15,8 +15,8 @@ import (
 
 func LoginPostHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		username := c.PostForm("username")
-		password := c.PostForm("password")
+		username := c.PostForm("Username")
+		password := c.PostForm("Password")
 
 		if helpers.EmptyUserPass(username, password) {
 			c.HTML(http.StatusBadRequest, LoginTemplate, gin.H{"content": "Parameters can't be empty."})

@@ -26,7 +26,7 @@ func InitDBPool() error {
 	}
 
 	// Customize connection pool size (adjust as needed)
-	config.MaxConns = 10 // Set your desired maximum connection pool size
+	config.MaxConns = 5 // Set your desired maximum connection pool size
 
 	// Customize connection pool cleanup (set idle timeout)
 	config.MaxConnIdleTime = 5 * time.Minute // Close idle connections after 5 minutes

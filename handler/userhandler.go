@@ -66,18 +66,31 @@ func ListUserGetHandler() gin.HandlerFunc {
 			return
 		}
 
+	 		//fmt.Printf("\n\nUser Data: %+v\n\n", users)
+		c.HTML(http.StatusOK, "vueuserlist.tmpl", gin.H{}) 
+	}
+}
+
+func ListMyUserAPI() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		session := sessions.Default(c)
+		user := session.Get(globals.UserKey)
+
+		if user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"content": "User not found in session."})
+			return
+		}
 		// Connect to the database (assuming you've set up the DB connection)
 		dbConn, err := database.GetDBConnection()
 		if err != nil {
-			c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Database connection error"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Database connection error"})
 			return
 		}
 		defer dbConn.Release()
-
 		// Execute the SQL query to fetch data from the "users" table
 		rows, err := dbConn.Query(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
 		if err != nil {
-			c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Failed to fetch data from the database"})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch data from the database"})
 			return
 		}
 		defer rows.Close()
@@ -87,14 +100,11 @@ func ListUserGetHandler() gin.HandlerFunc {
 		for rows.Next() {
 			var user model.User // Replace "model.User" with the struct type that matches your user data
 			if err := rows.Scan(&user.UserID, &user.Username, &user.Email, &user.PasswordHash, &user.Comment); err != nil {
-				c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Error scanning user data"})
+				c.JSON(http.StatusInternalServerError, gin.H{"message": "Error scanning user data"})
 				return
 			}
 			users = append(users, user)
 		}
- 		//fmt.Printf("\n\nUser Data: %+v\n\n", users)
- 		c.HTML(http.StatusOK, "vue_userlist.tmpl", gin.H{
-			"user": users,
-		}) 
+		c.JSON(http.StatusOK, gin.H{"user": users})
 	}
 }

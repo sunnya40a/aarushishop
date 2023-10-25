@@ -24,7 +24,6 @@ func PublicRoutes(g *gin.RouterGroup) {
 func PrivateRoutes(g *gin.RouterGroup) {
 	// Apply the AuthMiddleware to protect these routes
 	g.Use(middleware.AuthMiddleware())
-
 	// Define your private routes here
 	g.GET("/dashboard", DashboardGetHandler())  // Display the user's dashboard.
 	g.GET("/logout", LogoutGetHandler())  // Handle user logout (GET).
@@ -32,11 +31,19 @@ func PrivateRoutes(g *gin.RouterGroup) {
 	// Additional required private  route here.
 	g.GET("/table", TableGetHandler())  // Display a data table.
 	g.GET("/listuser", ListUserGetHandler())  // Listing users
+	
+	// below are for experiment.
+	g.GET("/learn", LearnTableGetHandler()) // Learning purpose only.
+	g.GET("/entry", LearnEntryGetHandler()) // Learning purpose only.
 
-	// Create a sub-group for API routes
 	api := g.Group("/api")
 	{
-		api.GET("/listusers", APIListUserHandler())  // Get a list of users.
-		// Add more API routes here.
+		api.GET("/myuser", ListMyUserAPI())        
+		//learning Purpose only
+		api.GET("/users", ListUserAPI())                // Get a list of users.
+		api.GET("/users/:client_id", GetuserbyIDAPI())  // Get a user by ID.
+		api.POST("/users", CreateUserAPI())             // Create a new user.
+		api.PUT("/users/:client_id", EditUserAPI())     // Modify a user by ID.
+		api.DELETE("/users/:client_id",DeleteUserAPI()) // Delete a user by ID.
 	}
 }
