@@ -16,9 +16,24 @@ const (
 
 func PublicRoutes(g *gin.RouterGroup) {
 	// Public routes (do not require authentication)
+
+	g.GET("/test", TestAPI())
 	g.GET("/login", LoginGetHandler())
 	g.POST("/login", LoginPostHandler())
 	g.GET("/", IndexGetHandler())
+	g.POST("/loginapi",LoginAPI())
+	api := g.Group("/api")
+	{
+		api.GET("/myuser", ListMyUserAPI())        
+		//learning Purpose only
+		api.GET("/users", ListUserAPI())                // Get a list of users.
+		api.GET("/users/:client_id", GetuserbyIDAPI())  // Get a user by ID.
+		api.POST("/users", CreateUserAPI())             // Create a new user.
+		api.PUT("/users/:client_id", EditUserAPI())     // Modify a user by ID.
+		api.DELETE("/users/:client_id",DeleteUserAPI()) // Delete a user by ID.
+
+		api.GET("/category",ListCategoryAPI())
+	}
 }
 
 func PrivateRoutes(g *gin.RouterGroup) {
@@ -36,14 +51,14 @@ func PrivateRoutes(g *gin.RouterGroup) {
 	g.GET("/learn", LearnTableGetHandler()) // Learning purpose only.
 	g.GET("/entry", LearnEntryGetHandler()) // Learning purpose only.
 
-	api := g.Group("/api")
-	{
-		api.GET("/myuser", ListMyUserAPI())        
-		//learning Purpose only
-		api.GET("/users", ListUserAPI())                // Get a list of users.
-		api.GET("/users/:client_id", GetuserbyIDAPI())  // Get a user by ID.
-		api.POST("/users", CreateUserAPI())             // Create a new user.
-		api.PUT("/users/:client_id", EditUserAPI())     // Modify a user by ID.
-		api.DELETE("/users/:client_id",DeleteUserAPI()) // Delete a user by ID.
-	}
+	// api := g.Group("/api")
+	// {
+	// 	api.GET("/myuser", ListMyUserAPI())        
+	// 	//learning Purpose only
+	// 	api.GET("/users", ListUserAPI())                // Get a list of users.
+	// 	api.GET("/users/:client_id", GetuserbyIDAPI())  // Get a user by ID.
+	// 	api.POST("/users", CreateUserAPI())             // Create a new user.
+	// 	api.PUT("/users/:client_id", EditUserAPI())     // Modify a user by ID.
+	// 	api.DELETE("/users/:client_id",DeleteUserAPI()) // Delete a user by ID.
+	// }
 }

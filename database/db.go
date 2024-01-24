@@ -1,59 +1,54 @@
 // database/db.go
 
-// * postgres://chhabi:0hzwAcutBoSeC0rqV0bQ8PVbsB5at1TL@dpg-ck673fj6fquc73ddjncg-a.singapore-postgres.render.com:5432/school_y6lf?sslmode=prefer
-
 package database
 
 import (
 	"context"
+	"database/sql"
 	"log"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/go-sql-driver/mysql" // Import the MySQL driver
 	"github.com/pkg/errors"
 )
 
-var dbPool *pgxpool.Pool
+var db *sql.DB
 
-// InitDBPool initializes the database connection pool.
-func InitDBPool() error {
-	connStr := "postgres://chhabi:0hzwAcutBoSeC0rqV0bQ8PVbsB5at1TL@dpg-ck673fj6fquc73ddjncg-a.singapore-postgres.render.com:5432/school_y6lf?sslmode=prefer"
+// InitDB initializes the database connection.
+func InitDB() error {
+    connStr := "chhabi:NewPassword@tcp(localhost:3306)/shop" // Use TCP for MariaDB
 
-	// Create a new connection pool configuration
-	config, err := pgxpool.ParseConfig(connStr)
-	if err != nil {
-		return errors.Wrap(err, "failed to parse connection string")
-	}
+    // Create a new database connection
+    var err error
+    db, err = sql.Open("mysql", connStr)
+    if err != nil {
+        return errors.Wrap(err, "failed to open database connection")
+    }
 
-	// Customize connection pool size (adjust as needed)
-	config.MaxConns = 5 // Set your desired maximum connection pool size
+    // Ping the database to check the connection
+    err = db.PingContext(context.Background())
+    if err != nil {
+        return errors.Wrap(err, "failed to ping database")
+    }
 
-	// Customize connection pool cleanup (set idle timeout)
-	config.MaxConnIdleTime = 5 * time.Minute // Close idle connections after 5 minutes
+    // Set connection pool size and idle timeout (optional)
+    db.SetMaxOpenConns(5)
+    db.SetMaxIdleConns(2)
+    db.SetConnMaxLifetime(5 * time.Minute)
 
-	// Create a new connection pool using the parsed configuration
-	dbPool, err = pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return errors.Wrap(err, "failed to connect to the database")
-	}
-
-	log.Printf("Connected to the database")
-	return nil
+    log.Printf("Connected to MariaDB database")
+    return nil
 }
 
-// GetDBConnection returns a connection from the database pool.
-func GetDBConnection() (*pgxpool.Conn, error) {
-	conn, err := dbPool.Acquire(context.Background())
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to acquire database connection")
-	}
-	return conn, nil
+// GetDB returns the database connection.
+func GetDB() *sql.DB {
+    return db
 }
 
-// CloseDBPool closes the database connection pool.
-func CloseDBPool() {
-	if dbPool != nil {
-		dbPool.Close()
-		log.Printf("Closed the database connection pool")
-	}
+// CloseDB closes the database connection.
+func CloseDB() {
+    if db != nil {
+        db.Close()
+        log.Printf("Closed the database connection")
+    }
 }

@@ -24,20 +24,16 @@ func TableGetHandler() gin.HandlerFunc {
 		}
 
 		// Connect to the database (assuming you've set up the DB connection)
-		dbConn, err := database.GetDBConnection()
-		if err != nil {
-			c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Database connection error"})
-			return
-		}
-		defer dbConn.Release()
+		dbConn := database.GetDB()
 
-		// Execute the SQL query to fetch data from the "users" table
-		rows, err := dbConn.Query(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
-		if err != nil {
-			c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Failed to fetch data from the database"})
-			return
-		}
-		defer rows.Close()
+	// Execute the SQL query to fetch data from the "users" table
+			rows, err := dbConn.QueryContext(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
+			if err != nil {
+				c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Failed to fetch data from the database"})
+				return
+			}
+			defer rows.Close()
+
 		// Create a slice to store the user data
 		var users []model.User // Replace "model.User" with the struct type that matches your user data
 		// Iterate through the query results and append them to the slice
@@ -81,14 +77,11 @@ func ListMyUserAPI() gin.HandlerFunc {
 			return
 		}
 		// Connect to the database (assuming you've set up the DB connection)
-		dbConn, err := database.GetDBConnection()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"message": "Database connection error"})
-			return
-		}
-		defer dbConn.Release()
+		dbConn := database.GetDB()
+		
 		// Execute the SQL query to fetch data from the "users" table
-		rows, err := dbConn.Query(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
+		rows, err := dbConn.QueryContext(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
+	
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch data from the database"})
 			return

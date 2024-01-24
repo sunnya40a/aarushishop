@@ -1,8 +1,8 @@
 {
-    "DBHost": "dpg-ck673fj6fquc73ddjncg-a.singapore-postgres.render.com",
-    "DBPort": "5432",
-    "DBUser": "chhabi",
-    "DBPassword": "0hzwAcutBoSeC0rqV0bQ8PVbsB5at1TL",
-    "DBName": "school_y6lf",
-    "DBSSLMode": "prefer"
+	"DBHost": "localhost",
+	"DBPort": "3306",
+	"DBUser": "chhabi",
+	"DBPassword": "NewPassword",
+	"DBName": "shop",
+	"DBSSLMode": "prefer"
 }

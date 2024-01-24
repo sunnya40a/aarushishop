@@ -55,16 +55,11 @@ func ListUserAPI() gin.HandlerFunc {
 		} 
 
 		// Connect to the database (assuming you've set up the DB connection)
-		dbConn, err := database.GetDBConnection()
-		if err != nil {
-			log.Printf("Database connection error: %v", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection error"})
-			return
-		}
-		defer dbConn.Release()
+		dbConn := database.GetDB()
+
 
 		// Execute the SQL query to fetch data from the "learn" table
-		rows, err := dbConn.Query(context.Background(), "SELECT client_id, uname FROM public.learn")
+		rows, err := dbConn.QueryContext(context.Background(), "SELECT client_id, uname FROM learn")
 		if err != nil {
 			log.Printf("Failed to fetch data from the database: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data from the database"})
@@ -96,13 +91,8 @@ func CreateUserAPI() gin.HandlerFunc {
             return
         }
 
-        dbConn, err := database.GetDBConnection()
-        if err != nil {
-			log.Printf("Database connection error: %v", err.Error())
-            c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection error"})
-            return
-        }
-        defer dbConn.Release()
+        dbConn := database.GetDB()
+    
 		// Bind the JSON data from the request body to the newUser struct
         var newUser LUser
         if err := c.ShouldBindJSON(&newUser); err != nil {
@@ -111,9 +101,10 @@ func CreateUserAPI() gin.HandlerFunc {
             return
         }
 		// Execute an SQL INSERT statement to save the new user data
-        _, err = dbConn.Exec(context.Background(), "INSERT INTO public.learn (client_id, uname) VALUES ($1, $2)", newUser.ClientID, newUser.UName)
+        _, err := dbConn.ExecContext(context.Background(), "INSERT INTO learn (client_id, uname) VALUES (?, ?)", newUser.ClientID, newUser.UName)
         if err != nil {
 			log.Printf("Error inserting data: %v", err)
+		
             c.JSON(http.StatusInternalServerError, gin.H{
                 "status":  "error",
                 "message": "Failed to save data to the database",
@@ -143,15 +134,10 @@ func DeleteUserAPI()gin.HandlerFunc {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found in session."})
 		return
 		}
-		dbConn, err := database.GetDBConnection()
-		if err != nil {
-			log.Printf("Database connection error: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection error"})
-			return
-		}
-		defer dbConn.Release()
+		dbConn := database.GetDB()
+		
 		// Execute an SQL INSERT statement to save the new user data
-		_, err = dbConn.Exec(context.Background(), "DELETE FROM public.learn WHERE client_id = $1;", c.Param("client_id") )
+		_, err := dbConn.ExecContext(context.Background(), "DELETE FROM learn WHERE client_id = ?", c.Param("client_id"))
 		if err != nil {
 			log.Printf("Error inserting data: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -179,13 +165,8 @@ func EditUserAPI()gin.HandlerFunc {
 		}
 
 		// Get a database connection.
-		dbConn, err := database.GetDBConnection()
-		if err != nil {
-			log.Printf("Database connection error: %v", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database connection error"})
-			return
-		}
-		defer dbConn.Release()
+		dbConn := database.GetDB()
+	
 
 		// Bind the JSON data from the request body to the User struct.
 		var cuser LUser   // we define here cuser and user is already used for our session.
@@ -199,8 +180,10 @@ func EditUserAPI()gin.HandlerFunc {
 
 		// Check if the user exists with the specified client_id.
 		var count int
-		row := dbConn.QueryRow(context.Background(), "SELECT COUNT(*) FROM public.learn WHERE client_id = $1", cuser.ClientID)
-		err = row.Scan(&count)
+		row := dbConn.QueryRowContext(context.Background(), "SELECT COUNT(*) FROM learn WHERE client_id = ?", cuser.ClientID) 
+        err := row.Scan(&count)
+
+
 		if err != nil {
 			log.Printf("Error checking user existence: %v", err.Error())
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check user existence"})
@@ -212,12 +195,12 @@ func EditUserAPI()gin.HandlerFunc {
 		}
 
 		// Execute an SQL UPDATE statement to modify the user's name.
-		_, err = dbConn.Exec(context.Background(), "UPDATE public.learn SET uname = $1 WHERE client_id = $2", cuser.UName, cuser.ClientID)
-		if err != nil {
-			log.Printf("Error updating data: %v", err.Error())
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user data in the database"})
-			return
-		}
+		_, err = dbConn.ExecContext(context.Background(), "UPDATE learn SET uname = ? WHERE client_id = ?", cuser.UName, cuser.ClientID)
+        if err != nil {
+            log.Printf("Error updating data: %v", err.Error())
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user data in the database"})
+            return
+        }
 
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "Updated Successfully",
