@@ -22,7 +22,7 @@ func APIListUserHandler() gin.HandlerFunc {
 		}
 
 		// Connect to the MySQL database
-		dbConn:=database.GetDB()
+		dbConn := database.GetDB()
 		// Execute the SQL query to fetch data from the "users" table
 		rows, err := dbConn.QueryContext(context.Background(), "SELECT user_id, username, email, password_hash, comment FROM users")
 		if err != nil {

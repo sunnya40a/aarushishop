@@ -4,3 +4,4 @@ aarushishop
 Dockerfile
 fly.toml
 .vscode
+.dockerignore

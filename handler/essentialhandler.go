@@ -5,14 +5,12 @@ package handler
 import (
 	"aarushishop/globals"
 	"aarushishop/helpers"
-	"aarushishop/model"
 	"log"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
-
 
 func LoginPostHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -34,10 +32,10 @@ func LoginPostHandler() gin.HandlerFunc {
 		session := sessions.Default(c)
 		session.Options(sessions.Options{
 			Path:     "/",
-			MaxAge:   900, // 15 minutes in seconds
-			HttpOnly: true,
-			Secure:   true, // Set to true if your application uses HTTPS
+			MaxAge:   60 * 15, // 15 Min
 			SameSite: http.SameSiteStrictMode,
+			Secure:   true,
+			HttpOnly: true,
 		})
 		session.Set(globals.UserKey, username)
 
@@ -115,7 +113,7 @@ func logoutUser(c *gin.Context) {
 	// Retrieve the user from the session
 	session := sessions.Default(c)
 	user := session.Get(globals.UserKey)
-
+	log.Printf("user logout : %s", user)
 	if user == nil {
 		// Handle the case where the session is invalid or user is not logged in
 		c.HTML(http.StatusMovedPermanently, LoginTemplate, gin.H{"content": "Invalid session token."})
@@ -134,66 +132,4 @@ func logoutUser(c *gin.Context) {
 	// Redirect to the login page after successful logout
 	c.Redirect(http.StatusMovedPermanently, "/")
 	log.Print("\n========================\nSession Deleted and Logout Successful.\n")
-}
-
-func LoginAPI() gin.HandlerFunc {
-	return func(c *gin.Context) {
-
-		var user model.LoginUser
-		if err := c.ShouldBindJSON(&user); err != nil {
-			log.Printf("Error on JSON Binding: %v", err.Error())
-            c.JSON(http.StatusBadRequest, gin.H{"content": "Invalid JSON format"})
-            return
-        }
-
-		// Check if username or password is empty
-		log.Printf("Username :  %s -- Password: %s", user.Username, user.Password)
-		if helpers.EmptyUserPass(user.Username, user.Password) {
-			c.JSON(http.StatusBadRequest, gin.H{"content": "Parameters can't be empty."})
-			return
-		}
-		log.Printf("%s %s",user.Username, user.Password)
-		// Check user credentials
-		if !helpers.CheckUserPass(user.Username, user.Password) {
-			// Use constant for status code
-			c.JSON(http.StatusUnauthorized, gin.H{"content": "Incorrect username or password."})
-			return
-		}
-
-		// Create a session for the authenticated user with custom options
-		session := sessions.Default(c)
-		session.Options(sessions.Options{
-			Path:     "/",
-			MaxAge:   900, // 15 minutes in seconds
-			HttpOnly: true,
-			Secure:   true, // Set to true if your application uses HTTPS
-			SameSite: http.SameSiteStrictMode,
-		})
-
-		// Set the authenticated user in the session
-		session.Set(globals.UserKey, user.Username)
-
-		// Save the session (set the session cookie)
-		if err := session.Save(); err != nil {
-			// Log the error for debugging purposes
-			log.Printf("Error saving session: %v", err)
-			c.AbortWithError(http.StatusInternalServerError, err)
-			return
-		}
-
-
-		// Log successful login
-		log.Printf("User %s logged in successfully", user.Username)
-
-		// Optionally, you may send a success response
-		c.JSON(http.StatusOK, gin.H{"content": "Login successful..."})
-	}
-}
-
-func TestAPI() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(200,gin.H{
-			"message": "Axios is working nicely",
-		})
-}
 }

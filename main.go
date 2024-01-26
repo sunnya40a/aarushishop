@@ -4,6 +4,7 @@ import (
 	"aarushishop/database"
 	"aarushishop/globals"
 	"aarushishop/handler"
+	"aarushishop/middleware"
 	"context"
 	"fmt"
 	"log"
@@ -38,6 +39,10 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	//router.Use(middleware.CSPMiddleware()) // It block cdn and java script outside the origin.
+	router.Use(middleware.STSMiddleware())
+	router.Use(middleware.SecurityHeadersMiddleware())
 
 	// Serve static files
 	router.Static("/assets", "./assets")
