@@ -33,10 +33,17 @@ type Inventory struct {
 // This is for Purchase.
 type Purchase struct {
 	Po          int     `json:"PO"`
+	Pdate       string  `json:"Pdate"`
 	Item_List   string  `json:"Item_list"`
 	Description string  `json:"Description"`
 	Qty         int     `json:"Qty"`
 	Category    string  `json:"Category"`
 	Price       float64 `json:"Price"`
 	User        string  `json:"User"`
+}
+
+type TestUser struct {
+	ClientID int    `json:"client_id"`
+	Uname    string `json:"Uname"`
+	DOB      string `json:"DOB"`
 }

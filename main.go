@@ -4,14 +4,13 @@ import (
 	"aarushishop/database"
 	"aarushishop/globals"
 	"aarushishop/handler"
-	"aarushishop/middleware"
 	"context"
+	"embed"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -20,9 +19,14 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/unrolled/secure"
 )
 
+//go:embed frontend/*
+var staticFiles embed.FS
+
 func main() {
+
 	if err := database.InitDB(); err != nil {
 		panic(err)
 	}
@@ -30,9 +34,8 @@ func main() {
 	router := gin.Default()
 
 	// Enable CORS
-
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"}, // Replace with the correct origin of your Vue.js app
+		AllowOrigins:     []string{"http://localhost:8000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -40,48 +43,74 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	//router.Use(middleware.CSPMiddleware()) // It block cdn and java script outside the origin.
-	router.Use(middleware.STSMiddleware())
-	router.Use(middleware.SecurityHeadersMiddleware())
+	// Use secure middleware to set security headers
+	secureMiddleware := secure.New(secure.Options{
+		FrameDeny:          true,
+		ContentTypeNosniff: true,
+		BrowserXssFilter:   true,
+		ContentSecurityPolicy: "default-src 'self'; " +
+			"script-src 'self' 'unsafe-inline'; " +
+			"style-src 'self' 'unsafe-inline'; " +
+			"img-src 'self'; " +
+			"connect-src 'self'; " +
+			"font-src 'self'; " +
+			"frame-src 'self'; " +
+			"object-src 'self'",
+	})
+
+	router.Use(applySecurityHeaders(secureMiddleware))
 
 	// Serve static files
-	router.Static("/assets", "./assets")
-	router.Static("/static", "./static") // Corrected directory path
-	router.Static("/favicon.ico", "./assets/favicon.ico")
-
-	templateFiles := []string{}
-	err := filepath.Walk("templates", func(path string, info os.FileInfo, err error) error {
-		if !info.IsDir() && strings.HasSuffix(info.Name(), ".tmpl") {
-			templateFiles = append(templateFiles, path)
+	router.GET("/assets/*filepath", func(c *gin.Context) {
+		filepath := "frontend/assets" + c.Param("filepath")
+		content, err := staticFiles.ReadFile(filepath)
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
 		}
-		return nil
+
+		// Set the Content-Type header based on the file extension
+		contentType := getContentType(filepath)
+		c.Data(http.StatusOK, contentType, content)
 	})
-	if err != nil {
-		fmt.Println("Error loading templates:", err)
-		return
-	}
 
-	router.LoadHTMLFiles(templateFiles...)
+	// Handle wildcard route for Vue.js history mode
+	router.NoRoute(func(c *gin.Context) {
+		indexPath := "frontend/index.html"
+		content, err := staticFiles.ReadFile(indexPath)
 
-	fmt.Println("\nNumber of loaded templates:", len(templateFiles))
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
 
-	fmt.Println("\nLoaded templates:")
-	for i, file := range templateFiles {
-		fmt.Printf("%d. %s\n", i+1, file)
-	}
-	fmt.Printf("\n")
+		c.Data(http.StatusOK, "text/html; charset=utf-8", content)
+	})
+
+	// Serve font files
+	router.GET("/fonts/*filepath", func(c *gin.Context) {
+		filepath := "fonts" + c.Param("filepath")
+		content, err := staticFiles.ReadFile(filepath)
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+
+		// Set the Content-Type header based on the file extension
+		contentType := getContentType(filepath)
+		c.Data(http.StatusOK, contentType, content)
+	})
 
 	store := cookie.NewStore(globals.Secret)
 	router.Use(sessions.Sessions("my-session", store))
 
+	// Public routes
 	public := router.Group("/")
 	handler.PublicRoutes(public)
 
-	private := router.Group("/")
-	handler.PrivateRoutes(private)
-
 	defer database.CloseDB()
 
+	// Start the server
 	server := &http.Server{
 		Addr:    "0.0.0.0:8000",
 		Handler: router,
@@ -109,4 +138,44 @@ func main() {
 	database.CloseDB()
 
 	log.Println("Application gracefully terminated")
+}
+
+func applySecurityHeaders(secureMiddleware *secure.Secure) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Apply secure middleware
+		err := secureMiddleware.Process(c.Writer, c.Request)
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+
+		// Generate a nonce (replace this with a real nonce generator)
+		nonce := "your_generated_nonce"
+
+		// Update CSP header to use the nonce for inline scripts
+		c.Header("Content-Security-Policy", fmt.Sprintf("default-src 'self'; script-src 'self' 'nonce-%s'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self'; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-src 'self'; object-src 'self'", nonce))
+
+		// Continue processing the request
+		c.Next()
+	}
+}
+
+func getContentType(filename string) string {
+	switch {
+	case strings.HasSuffix(filename, ".js"):
+		return "application/javascript"
+	case strings.HasSuffix(filename, ".css"):
+		return "text/css"
+	case strings.HasSuffix(filename, ".png"):
+		return "image/png"
+	case strings.HasSuffix(filename, ".jpg"), strings.HasSuffix(filename, ".jpeg"):
+		return "image/jpeg"
+	case strings.HasSuffix(filename, ".gif"):
+		return "image/gif"
+	case strings.HasSuffix(filename, ".svg"):
+		return "image/svg+xml"
+	// Add more cases for other file types as needed
+	default:
+		return "application/octet-stream"
+	}
 }

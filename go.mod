@@ -8,6 +8,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/pkg/errors v0.9.1
+	github.com/unrolled/secure v1.14.0
 	golang.org/x/crypto v0.18.0
 )
 

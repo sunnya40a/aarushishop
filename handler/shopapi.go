@@ -5,6 +5,7 @@ import (
 	"aarushishop/globals"
 	"aarushishop/helpers"
 	"aarushishop/model"
+	"context"
 
 	//	"context"
 	"log"
@@ -176,8 +177,8 @@ func AddPurchaseAPI() gin.HandlerFunc {
 		}
 
 		// Execute an SQL to Insert Purchase Entry within the transaction
-		insertPurchaseQuery := "INSERT INTO purchaseHistory (PO, item_list, description, qty, category, Price, User) VALUES (?, ?, ?, ?, ?, ?, ?)"
-		_, err = tx.Exec(insertPurchaseQuery, Purchase.Po, Purchase.Item_List, Purchase.Description, Purchase.Qty, Purchase.Category, Purchase.Price, Purchase.User)
+		insertPurchaseQuery := "INSERT INTO purchaseHistory (PO, Pdate, item_list, description, qty, category, Price, User) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+		_, err = tx.Exec(insertPurchaseQuery, Purchase.Po, Purchase.Pdate, Purchase.Item_List, Purchase.Description, Purchase.Qty, Purchase.Category, Purchase.Price, Purchase.User)
 		if err != nil {
 			log.Printf("Error inserting data into purchaseHistory: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -199,6 +200,7 @@ func AddPurchaseAPI() gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"PO":          Purchase.Po,
+			"Pdate":       Purchase.Pdate,
 			"item_list":   Purchase.Item_List,
 			"description": Purchase.Description,
 			"qty":         Purchase.Qty,
@@ -227,7 +229,7 @@ func ListPurchaseAPI() gin.HandlerFunc {
 		dbConn := database.GetDB()
 
 		// Perform the database query to fetch purchase history
-		rows, err := dbConn.Query("SELECT PO, item_list, description, qty, category, Price, User FROM purchaseHistory ORDER BY PO")
+		rows, err := dbConn.Query("SELECT PO, Pdate, item_list, description, qty, category, Price, User FROM purchaseHistory ORDER BY PO")
 		if err != nil {
 			log.Printf("Error executing query: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data from the database"})
@@ -241,11 +243,16 @@ func ListPurchaseAPI() gin.HandlerFunc {
 			var purchase model.Purchase
 
 			// Scan the database row into the Purchase struct
-			if err := rows.Scan(&purchase.Po, &purchase.Item_List, &purchase.Description, &purchase.Qty, &purchase.Category, &purchase.Price, &purchase.User); err != nil {
+			if err := rows.Scan(&purchase.Po, &purchase.Pdate, &purchase.Item_List, &purchase.Description, &purchase.Qty, &purchase.Category, &purchase.Price, &purchase.User); err != nil {
 				log.Printf("Error scanning row: %v", err)
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch data from the database"})
 				return
 			}
+
+			// Check for NULL values and skip processing if any field is NULL
+			//if purchase.Po == 0 || purchase.Item_List == "" || purchase.Description == "" || purchase.Qty == 0 || purchase.Category == "" || purchase.Price == 0 || purchase.User == "" {
+			//	continue
+			//}
 
 			// Append the Purchase struct to the slice
 			purchases = append(purchases, purchase)
@@ -260,5 +267,67 @@ func ListPurchaseAPI() gin.HandlerFunc {
 
 		// Return the fetched data as JSON
 		c.JSON(http.StatusOK, purchases)
+	}
+}
+
+func AddTestUserAPI() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var user model.TestUser
+
+		if err := c.ShouldBindJSON(&user); err != nil {
+			log.Println("Error on JSON Binding:", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
+			return
+		}
+
+		dbConn := database.GetDB()
+
+		_, err := dbConn.Exec("INSERT INTO learn (client_id, Uname, DOB) VALUES (?, ?, ?)", user.ClientID, user.Uname, user.DOB)
+		if err != nil {
+			log.Println("Error inserting data into learn:", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{"message": "User added successfully"})
+	}
+}
+
+func ListCategoryAPI() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		//session := sessions.Default(c)
+		//user := session.Get(globals.UserKey)
+
+		//if user == nil {
+		//	c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
+		//	return
+		//}
+
+		// Connect to the MySQL database
+		dbConn := database.GetDB()
+		// Execute the SQL query to fetch data from the "users" table
+		rows, err := dbConn.QueryContext(context.Background(), "select category_code, description  from category_list")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to fetch data from the database"})
+			return
+		}
+		defer rows.Close()
+
+		// Create a slice to store the category data
+		var categories []model.Category // Replace "model.Category" with the struct type that matches your category data
+
+		// Iterate through the query results and append them to the slice
+		for rows.Next() {
+			var category model.Category // Replace "model.User" with the struct type that matches your user data
+			if err := rows.Scan(&category.CategoryCode, &category.Description); err != nil {
+				c.HTML(http.StatusInternalServerError, "error.tmpl", gin.H{"message": "Error scanning user data"})
+				return
+			}
+			categories = append(categories, category)
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"category": categories,
+		})
 	}
 }

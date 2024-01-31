@@ -57,8 +57,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		if user == nil {
 			// User is not authenticated or session expired
 			//c.Redirect(http.StatusSeeOther, "/login")
-			c.HTML(http.StatusSeeOther, "login.tmpl", gin.H{
-				"content": "You are not authorized. Please log in",
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"content": "You are not authorized.",
 			})
 			c.Abort()
 			return
@@ -74,7 +74,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		// Save the updated session
 		if err := session.Save(); err != nil {
-			c.String(http.StatusInternalServerError, "Error renewing session")
+			c.JSON(http.StatusInternalServerError, "Error renewing session")
 			c.Abort()
 			return
 		}
