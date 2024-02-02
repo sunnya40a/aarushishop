@@ -2,11 +2,6 @@
 package middleware
 
 import (
-	"aarushishop/globals"
-	"log"
-	"net/http"
-
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -42,42 +37,6 @@ func SecurityHeadersMiddleware() gin.HandlerFunc {
 		c.Writer.Header().Set("X-Permitted-Cross-Domain-Policies", "none")
 		c.Writer.Header().Set("Feature-Policy", "geolocation 'self'; microphone 'self'; camera 'self'")
 		// Add more headers as needed
-
-		c.Next()
-	}
-}
-
-// SessionMiddleware handles session expiration and renewal.
-func AuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// Check if the user is authenticated
-		session := sessions.Default(c)
-		user := session.Get(globals.UserKey)
-
-		if user == nil {
-			// User is not authenticated or session expired
-			//c.Redirect(http.StatusSeeOther, "/login")
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"content": "You are not authorized.",
-			})
-			c.Abort()
-			return
-		}
-		log.Print("\n============\nSession middleware activated\n")
-		// If the session is not expired, renew it by 15 minutes
-		session.Options(sessions.Options{
-			MaxAge:   60 * 15, // 15 Min
-			SameSite: http.SameSiteStrictMode,
-			Secure:   true,
-			HttpOnly: true,
-		})
-
-		// Save the updated session
-		if err := session.Save(); err != nil {
-			c.JSON(http.StatusInternalServerError, "Error renewing session")
-			c.Abort()
-			return
-		}
 
 		c.Next()
 	}

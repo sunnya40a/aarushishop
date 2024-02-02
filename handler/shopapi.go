@@ -15,57 +15,61 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// LoginAPI handles user login
+const (
+	BadRequest          = http.StatusBadRequest
+	Unauthorized        = http.StatusUnauthorized
+	InternalServerError = http.StatusInternalServerError
+	OK                  = http.StatusOK
+)
+
+const (
+	SessionMaxAge = 10 * 60 // 15 minutes in seconds
+)
+
+func setSessionOptions(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   SessionMaxAge,
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
+	})
+}
+
+// LoginAPI handles user login.
 func LoginAPI() gin.HandlerFunc {
 	return func(c *gin.Context) {
-
 		var user model.LoginUser
 		if err := c.ShouldBindJSON(&user); err != nil {
-			log.Printf("Error on JSON Binding: %v", err.Error())
-			c.JSON(http.StatusBadRequest, gin.H{"content": "Invalid JSON format"})
+			log.Println("Error on JSON Binding:", err.Error())
+			c.JSON(BadRequest, gin.H{"content": "Invalid JSON format"})
 			return
 		}
 
-		// Check if username or password is empty
-		log.Printf("Username :  %s -- Password: %s", user.Username, user.Password)
 		if helpers.EmptyUserPass(user.Username, user.Password) {
-			c.JSON(http.StatusBadRequest, gin.H{"content": "Parameters can't be empty."})
+			c.JSON(BadRequest, gin.H{"content": "Parameters can't be empty."})
 			return
 		}
-		log.Printf("%s %s", user.Username, user.Password)
-		// Check user credentials
+
 		if !helpers.CheckUserPass(user.Username, user.Password) {
-			// Use constant for status code
-			c.JSON(http.StatusUnauthorized, gin.H{"content": "Incorrect username or password."})
+			c.JSON(Unauthorized, gin.H{"content": "Incorrect username or password."})
 			return
 		}
 
-		// Create a session for the authenticated user with custom options
-		session := sessions.Default(c)
-		session.Options(sessions.Options{
-			Path:     "/",
-			MaxAge:   900, // 15 minutes in seconds
-			HttpOnly: true,
-			Secure:   true, // Set to true if your application uses HTTPS
-			SameSite: http.SameSiteStrictMode,
-		})
+		setSessionOptions(c)
 
-		// Set the authenticated user in the session
+		session := sessions.Default(c)
 		session.Set(globals.UserKey, user.Username)
 
-		// Save the session (set the session cookie)
 		if err := session.Save(); err != nil {
-			// Log the error for debugging purposes
-			log.Printf("Error saving session: %v", err)
-			c.AbortWithError(http.StatusInternalServerError, err)
+			log.Println("Error saving session:", err)
+			c.JSON(InternalServerError, gin.H{"content": "Internal Server Error"})
 			return
 		}
 
-		// Log successful login
 		log.Printf("User %s logged in successfully", user.Username)
-
-		// Optionally, you may send a success response
-		c.JSON(http.StatusOK, gin.H{"content": "Login successful..."})
+		c.JSON(OK, gin.H{"content": "Login successful..."})
 	}
 }
 
@@ -75,10 +79,10 @@ func LogoutAPI() gin.HandlerFunc {
 		// Retrieve the user from the session
 		session := sessions.Default(c)
 		user := session.Get(globals.UserKey)
-
+		log.Printf("%s", user)
 		if user == nil {
-			// Handle the case where the session is invalid or user is not logged in
-			c.JSON(http.StatusUnauthorized, gin.H{"content": "Invalid logout request."})
+			// Handle the case where the session is invalid or the user is not logged in
+			c.JSON(Unauthorized, gin.H{"content": "Invalid logout request."})
 			return
 		}
 
@@ -87,35 +91,28 @@ func LogoutAPI() gin.HandlerFunc {
 
 		// Save the session to remove the user's session cookie
 		if err := session.Save(); err != nil {
-			c.AbortWithError(http.StatusInternalServerError, err)
+			log.Println("Error saving session during logout:", err)
+			c.JSON(InternalServerError, gin.H{"content": "Logout failed. Please try again."})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"content": "Logout successful..."})
-	}
-}
-
-// Sample testing api
-func TestAPI() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Axios is working nicely",
-		})
+		log.Printf("User %s logged out successfully", user)
+		c.JSON(OK, gin.H{"content": "Logout successful..."})
 	}
 }
 
 // Purchase Entry API
 func AddPurchaseAPI() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// // Retrieve the user from the session
-		// session := sessions.Default(c)
-		// user := session.Get(globals.UserKey)
+		// Retrieve the user from the session
+		session := sessions.Default(c)
+		user := session.Get(globals.UserKey)
 
-		// if user == nil {
-		// 	// Handle the case where the session is invalid or user is not logged in
-		// 	c.JSON(http.StatusUnauthorized, gin.H{"content": "Invalid logout request."})
-		// 	return
-		// }
+		if user == nil {
+			// Handle the case where the session is invalid or user is not logged in
+			c.JSON(http.StatusUnauthorized, gin.H{"content": "unauthorized request."})
+			return
+		}
 		dbConn := database.GetDB()
 
 		var Purchase model.Purchase
@@ -214,17 +211,6 @@ func AddPurchaseAPI() gin.HandlerFunc {
 // ListPurchaseAPI is a Gin handler function that retrieves a list of purchases from the database and returns them as JSON.
 func ListPurchaseAPI() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Uncomment the following code if user authentication is required
-		// // Retrieve the user from the session
-		// session := sessions.Default(c)
-		// user := session.Get(globals.UserKey)
-
-		// // Check if the user is not logged in
-		// if user == nil {
-		// 	c.JSON(http.StatusUnauthorized, gin.H{"content": "Invalid logout request."})
-		// 	return
-		// }
-
 		// Connect to the MySQL database
 		dbConn := database.GetDB()
 
@@ -270,39 +256,8 @@ func ListPurchaseAPI() gin.HandlerFunc {
 	}
 }
 
-func AddTestUserAPI() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var user model.TestUser
-
-		if err := c.ShouldBindJSON(&user); err != nil {
-			log.Println("Error on JSON Binding:", err)
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Bad Request"})
-			return
-		}
-
-		dbConn := database.GetDB()
-
-		_, err := dbConn.Exec("INSERT INTO learn (client_id, Uname, DOB) VALUES (?, ?, ?)", user.ClientID, user.Uname, user.DOB)
-		if err != nil {
-			log.Println("Error inserting data into learn:", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
-			return
-		}
-
-		c.JSON(http.StatusCreated, gin.H{"message": "User added successfully"})
-	}
-}
-
 func ListCategoryAPI() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//session := sessions.Default(c)
-		//user := session.Get(globals.UserKey)
-
-		//if user == nil {
-		//	c.HTML(http.StatusUnauthorized, LoginTemplate, gin.H{"content": "User not found in session."})
-		//	return
-		//}
-
 		// Connect to the MySQL database
 		dbConn := database.GetDB()
 		// Execute the SQL query to fetch data from the "users" table

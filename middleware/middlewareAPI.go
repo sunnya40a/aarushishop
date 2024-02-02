@@ -10,7 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// SessionMiddleware handles session expiration and renewal.
+const (
+	Unauthorized        = http.StatusUnauthorized
+	InternalServerError = http.StatusInternalServerError
+	OK                  = http.StatusOK
+	SessionMaxAge       = 10 * 60 // 10 minutes in seconds
+)
+
+// AuthMiddlewareAPI handles session expiration and renewal.
 func AuthMiddlewareAPI() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check if the user is authenticated
@@ -19,25 +26,27 @@ func AuthMiddlewareAPI() gin.HandlerFunc {
 
 		if user == nil {
 			// User is not authenticated or session expired
-			//c.Redirect(http.StatusSeeOther, "/login")
-			c.HTML(http.StatusSeeOther, "login.tmpl", gin.H{
-				"content": "You are not authorized. Please log in",
-			})
+			c.JSON(Unauthorized, gin.H{"content": "Unauthorized request"})
 			c.Abort()
 			return
 		}
-		log.Print("\n============\nSession middleware activated\n")
+
+		log.Printf("User: %v", user)
+		log.Printf("Session middleware activated for user: %v", user)
+
 		// If the session is not expired, renew it by 15 minutes
 		session.Options(sessions.Options{
-			MaxAge:   60 * 15, // 15 Min
-			SameSite: http.SameSiteStrictMode,
-			Secure:   true,
+			Path:     "/",
+			MaxAge:   SessionMaxAge,
 			HttpOnly: true,
+			Secure:   true,
+			SameSite: http.SameSiteStrictMode,
 		})
 
 		// Save the updated session
 		if err := session.Save(); err != nil {
-			c.String(http.StatusInternalServerError, "Error renewing session")
+			log.Println("Error renewing session:", err)
+			c.String(InternalServerError, "Error renewing session")
 			c.Abort()
 			return
 		}
