@@ -1,6 +1,8 @@
 // * model/model.go
 package model
 
+import "github.com/golang-jwt/jwt/v5"
+
 // This is for login
 type LoginUser struct {
 	Username string `json:"Username"`
@@ -46,4 +48,15 @@ type TestUser struct {
 	ClientID int    `json:"client_id"`
 	Uname    string `json:"Uname"`
 	DOB      string `json:"DOB"`
+}
+
+// CustomClaims defines the custom claims for the JWT token.
+type CustomClaims struct {
+	Username string `json:"username"`
+	jwt.RegisteredClaims
+}
+
+type RefreshClaims struct {
+    jwt.RegisteredClaims
+    Username string `json:"username"` 
 }

@@ -2,19 +2,17 @@
 package middleware
 
 import (
-	"aarushishop/globals"
 	"log"
 	"net/http"
+
+	"aarushishop/globals"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	Unauthorized        = http.StatusUnauthorized
-	InternalServerError = http.StatusInternalServerError
-	OK                  = http.StatusOK
-	SessionMaxAge       = 10 * 60 // 10 minutes in seconds
+	SessionMaxAge = 10 * 60 // 10 minutes in seconds
 )
 
 // AuthMiddlewareAPI handles session expiration and renewal.

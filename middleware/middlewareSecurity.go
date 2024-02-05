@@ -2,7 +2,16 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+)
+
+const (
+	InternalServerError = http.StatusInternalServerError
+	OK                  = http.StatusOK
+	BadRequest          = http.StatusBadRequest
+	Unauthorized        = http.StatusUnauthorized
 )
 
 // Strict Transport Security (STS) configuration
