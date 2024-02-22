@@ -43,6 +43,10 @@ func LoginAPI() gin.HandlerFunc {
 			c.JSON(BadRequest, gin.H{"content": "Invalid JSON format"})
 			return
 		}
+		//below 3 line is to print tokenString. we can remove it latter.
+		authHeader1 := c.GetHeader("authorization")
+		tokenString1 := strings.TrimPrefix(authHeader1, "Bearer ")
+		log.Printf("Token Verified:%s",tokenString1)
 
 		// Step 2: Check if username and password are empty
 		if helpers.EmptyUserPass(user.Username, user.Password) {
@@ -63,7 +67,7 @@ func LoginAPI() gin.HandlerFunc {
 
 		log.Printf("User %s Passed from session", user.Username)
 		// Step 5: Retrieve the JWT token from the Authorization header
-		authHeader := c.GetHeader("Authorization")
+		authHeader := c.GetHeader("authorization")
 		if authHeader == "" {
 			validtoken = false
 		} else {
@@ -100,7 +104,7 @@ func LoginAPI() gin.HandlerFunc {
 			log.Printf("User %s logged in successfully with new token", user.Username)
 			c.JSON(OK, gin.H{
 				"token":         "Bearer " + tokenString,
-				"refresh_token": "Bearer " + refreshToken,
+				"reftoken": "Bearer " + refreshToken,
 				"content":       "Login successful...",
 			})
 		}
@@ -114,14 +118,14 @@ func parseAndValidateJWT(c *gin.Context, tokenString string) (*jwt.Token, error)
 	})
 
 	if err != nil {
-		c.JSON(Unauthorized, gin.H{"content": "Invalid token"})
+		//Token is invalid
 		return nil, fmt.Errorf("invalid token")
 	}
 
 	// Check if the token is valid
 	_, ok := token.Claims.(*model.CustomClaims)
 	if !ok || !token.Valid {
-		c.JSON(Unauthorized, gin.H{"content": "Invalid token"})
+		//Token is invalid
 		return nil, fmt.Errorf("invalid token")
 	}
 	return token, nil
@@ -177,7 +181,7 @@ func LogoutAPI() gin.HandlerFunc {
 func LogoutAPIJWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Retrieve the JWT token from the Authorization header
-		tokenString := c.GetHeader("Authorization")
+		tokenString := c.GetHeader("authorization")
 		if tokenString == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"content": "Missing Authorization header"})
 			return

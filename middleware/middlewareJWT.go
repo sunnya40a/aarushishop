@@ -15,7 +15,7 @@ import (
 // Middleware to validate JWT token
 func AuthMiddlewareAPIJWT() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
+		authHeader := c.GetHeader("authorization")
 		if authHeader == "" {
 			c.JSON(Unauthorized, gin.H{"error": "Missing Authorization header"})
 			c.Abort()

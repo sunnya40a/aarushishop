@@ -5,6 +5,7 @@ import (
 	"aarushishop/globals"
 	"aarushishop/model"
 	"errors"
+	"log"
 
 	"net/http"
 	"strings"
@@ -46,7 +47,7 @@ func CreateToken(username string) (string, error) {
 }
 func RefreshTokenAPI() gin.HandlerFunc {
     return func(c *gin.Context) {
-        refreshTokenString := c.GetHeader("RefreshToken")
+        refreshTokenString := c.GetHeader("refreshtoken")
         if refreshTokenString == "" {
             c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing RefreshToken header"})
             return
@@ -68,8 +69,8 @@ func RefreshTokenAPI() gin.HandlerFunc {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal Server Error"})
             return
         }
-
-        c.JSON(http.StatusOK, gin.H{"New_token": "Bearer " + accessToken})
+		log.Printf("\nNew toke issued %s\n",accessToken)
+        c.JSON(http.StatusOK, gin.H{"newtoken": "Bearer " + accessToken})
     }
 }
 

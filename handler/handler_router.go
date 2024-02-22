@@ -21,10 +21,11 @@ func PublicRoutes(g *gin.RouterGroup) {
 	// Public routes (do not require authentication)
 	g.POST("loginapi", LoginAPI())
 	g.POST("refreshtoken", helpers.RefreshTokenAPI())
+	g.GET("/test", PublicTestAPI())
 }
 
 func PrivateRoutes(g *gin.RouterGroup) {
-	// Use session expiration/renewal middleware
+	//Use session expiration/renewal middleware
 	g.Use(middleware.AuthMiddlewareAPI())
 	// Use JWT token validation middleware
 	g.Use(middleware.AuthMiddlewareAPIJWT())

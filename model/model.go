@@ -57,6 +57,6 @@ type CustomClaims struct {
 }
 
 type RefreshClaims struct {
-    jwt.RegisteredClaims
-    Username string `json:"username"` 
+	jwt.RegisteredClaims
+	Username string `json:"username"`
 }
