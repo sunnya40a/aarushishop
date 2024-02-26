@@ -302,7 +302,7 @@ func ListCategoryAPI() gin.HandlerFunc {
 
 // ListPurchaseAPI is a Gin handler function that returns Purchase list as JSON
 func ListPurchaseAPI() gin.HandlerFunc {
-	return func(c *gin.Context) {
+		return func(c *gin.Context) {
 
 		type ListPurchases struct {
 			Page      int    `form:"page" validate:"omitempty,min=1,max=20"`     // Page number for pagination (optional), range: 1-20
@@ -369,6 +369,7 @@ func ListPurchaseAPI() gin.HandlerFunc {
 		// Initialize SQL query builder
 		var queryBuilder squirrel.SelectBuilder
 		queryBuilder = squirrel.Select("PO, Pdate, item_list, description, qty, category, Price, User").From("purchaseHistory")
+		countBuilder := squirrel.Select("COUNT(*)").From("purchaseHistory")
 
 		// Add date filter if provided
 		if ListPurchase.DateFrom != "" && ListPurchase.DateTo != "" {
@@ -381,6 +382,7 @@ func ListPurchaseAPI() gin.HandlerFunc {
 				return
 			}
 			queryBuilder = queryBuilder.Where(squirrel.Expr("Pdate BETWEEN ? AND ?", ListPurchase.DateFrom, ListPurchase.DateTo))
+			countBuilder = countBuilder.Where(squirrel.Expr("Pdate BETWEEN ? AND ?", ListPurchase.DateFrom, ListPurchase.DateTo))
 		}
 
 		// Add search criteria if provided
@@ -397,6 +399,7 @@ func ListPurchaseAPI() gin.HandlerFunc {
 				squirrel.Like{"User": searchTerm},
 			}
 			queryBuilder = queryBuilder.Where(searchCriteria)
+			countBuilder = countBuilder.Where(searchCriteria)
 		}
 
 		// Add pagination and sorting
@@ -413,26 +416,7 @@ func ListPurchaseAPI() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to build SQL query"})
 			return
 		}
-
-		// Build SQL query for counting total records
-		countBuilder := squirrel.Select("COUNT(*)").From("purchaseHistory")
-		if ListPurchase.DateFrom != "" && ListPurchase.DateTo != "" {
-			countBuilder = countBuilder.Where(squirrel.Expr("Pdate BETWEEN ? AND ?", ListPurchase.DateFrom, ListPurchase.DateTo))
-		}
-		if ListPurchase.Search != "" {
-			searchTerm := "%" + sanitize.HTML(ListPurchase.Search) + "%"
-			searchCriteria := squirrel.Or{
-				squirrel.Like{"PO": searchTerm},
-				squirrel.Like{"Pdate": searchTerm},
-				squirrel.Like{"item_list": searchTerm},
-				squirrel.Like{"description": searchTerm},
-				squirrel.Like{"category": searchTerm},
-				squirrel.Like{"Price": searchTerm},
-				squirrel.Like{"User": searchTerm},
-			}
-			countBuilder = countBuilder.Where(searchCriteria)
-		}
-
+		
 		// Generate SQL query string for counting total records
 		countString, countArgs, err := countBuilder.ToSql()
 		if err != nil {
@@ -478,6 +462,7 @@ func ListPurchaseAPI() gin.HandlerFunc {
 		})
 	}
 }
+
 
 // CPublicTestAPI is a Gin handler function that handles the API endpoint for adding a purchase
 func PublicTestAPI() gin.HandlerFunc {
@@ -548,6 +533,7 @@ func PublicTestAPI() gin.HandlerFunc {
 		// Initialize SQL query builder
 		var queryBuilder squirrel.SelectBuilder
 		queryBuilder = squirrel.Select("PO, Pdate, item_list, description, qty, category, Price, User").From("purchaseHistory")
+		countBuilder := squirrel.Select("COUNT(*)").From("purchaseHistory")
 
 		// Add date filter if provided
 		if ListPurchase.DateFrom != "" && ListPurchase.DateTo != "" {
@@ -560,12 +546,13 @@ func PublicTestAPI() gin.HandlerFunc {
 				return
 			}
 			queryBuilder = queryBuilder.Where(squirrel.Expr("Pdate BETWEEN ? AND ?", ListPurchase.DateFrom, ListPurchase.DateTo))
+			countBuilder = countBuilder.Where(squirrel.Expr("Pdate BETWEEN ? AND ?", ListPurchase.DateFrom, ListPurchase.DateTo))
 		}
 
 		// Add search criteria if provided
 		if ListPurchase.Search != "" {
-			//sanitize and use serch field
-			searchTerm := "%" + sanitize.HTML(helpers.SanitizeData(ListPurchase.Search).(string)) + "%"
+			//sanitize serch field
+			searchTerm := "%" + sanitize.HTML(sanitize.Scripts(helpers.SanitizeData(ListPurchase.Search).(string))) + "%"
 			searchCriteria := squirrel.Or{
 				squirrel.Like{"PO": searchTerm},
 				squirrel.Like{"Pdate": searchTerm},
@@ -576,6 +563,7 @@ func PublicTestAPI() gin.HandlerFunc {
 				squirrel.Like{"User": searchTerm},
 			}
 			queryBuilder = queryBuilder.Where(searchCriteria)
+			countBuilder = countBuilder.Where(searchCriteria)
 		}
 
 		// Add pagination and sorting
@@ -592,26 +580,7 @@ func PublicTestAPI() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to build SQL query"})
 			return
 		}
-
-		// Build SQL query for counting total records
-		countBuilder := squirrel.Select("COUNT(*)").From("purchaseHistory")
-		if ListPurchase.DateFrom != "" && ListPurchase.DateTo != "" {
-			countBuilder = countBuilder.Where(squirrel.Expr("Pdate BETWEEN ? AND ?", ListPurchase.DateFrom, ListPurchase.DateTo))
-		}
-		if ListPurchase.Search != "" {
-			searchTerm := "%" + sanitize.HTML(ListPurchase.Search) + "%"
-			searchCriteria := squirrel.Or{
-				squirrel.Like{"PO": searchTerm},
-				squirrel.Like{"Pdate": searchTerm},
-				squirrel.Like{"item_list": searchTerm},
-				squirrel.Like{"description": searchTerm},
-				squirrel.Like{"category": searchTerm},
-				squirrel.Like{"Price": searchTerm},
-				squirrel.Like{"User": searchTerm},
-			}
-			countBuilder = countBuilder.Where(searchCriteria)
-		}
-
+		
 		// Generate SQL query string for counting total records
 		countString, countArgs, err := countBuilder.ToSql()
 		if err != nil {

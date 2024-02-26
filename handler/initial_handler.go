@@ -12,6 +12,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/mrz1836/go-sanitize"
 )
 
 const (
@@ -43,10 +44,15 @@ func LoginAPI() gin.HandlerFunc {
 			c.JSON(BadRequest, gin.H{"content": "Invalid JSON format"})
 			return
 		}
+
+		// Sanitize user input before using it in HTML responses
+		user.Username = sanitize.HTML(sanitize.Scripts(helpers.SanitizeUsername(user.Username)))
+		user.Password = helpers.SanitizePassword(user.Password)
+
 		//below 3 line is to print tokenString. we can remove it latter.
 		authHeader1 := c.GetHeader("authorization")
 		tokenString1 := strings.TrimPrefix(authHeader1, "Bearer ")
-		log.Printf("Token Verified:%s",tokenString1)
+		log.Printf("Token Verified:%s", tokenString1)
 
 		// Step 2: Check if username and password are empty
 		if helpers.EmptyUserPass(user.Username, user.Password) {
@@ -103,9 +109,9 @@ func LoginAPI() gin.HandlerFunc {
 		} else {
 			log.Printf("User %s logged in successfully with new token", user.Username)
 			c.JSON(OK, gin.H{
-				"token":         "Bearer " + tokenString,
+				"token":    "Bearer " + tokenString,
 				"reftoken": "Bearer " + refreshToken,
-				"content":       "Login successful...",
+				"content":  "Login successful...",
 			})
 		}
 	}

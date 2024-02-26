@@ -13,15 +13,12 @@ import (
 
 // SanitizeData sanitizes input data against SQL injection and XSS attacks.
 // For integers, it returns them as is.
-// For strings, it first sanitizes against SQL injection using sanitizeSQL,
+// For strings, it first sanitizes against SQL injection using SanitizeSQL,
+// then sanitizes using bluemonday.StrictPolicy() to prevent XSS attacks.
 // For time.Time objects, it returns them as is.
 // Unsupported types are returned as nil.
 func SanitizeData(input interface{}) interface{} {
-	// bluemonday.StrictPolicy() which can be thought of as equivalent to stripping all HTML elements and their attributes as it has nothing on its allowlist. An example usage scenario would be blog post titles where HTML tags are not expected at all and if they are then the elements and the content of the elements should be stripped. This is a very strict policy.
-	// bluemonday.UGCPolicy() which allows a broad selection of HTML elements and attributes that are safe for user generated content. Note that this policy does not allow iframes, object, embed, styles, script, etc. An example usage scenario would be blog post bodies where a variety of formatting is expected along with the potential for TABLEs and IMGs.
-
 	p := bluemonday.StrictPolicy()
-	//AntiSamy inherently includes Bluemonday's features as its core engine. future plan
 
 	switch v := input.(type) {
 	case int:
@@ -29,10 +26,8 @@ func SanitizeData(input interface{}) interface{} {
 		return v
 	case string:
 		// For strings, sanitize against SQL injection and XSS attacks
-		// SQL Injection protection
-		//cleanString := sanitizeSQL(v)
-		cleanString := p.Sanitize(v)
-		cleanString = SanitizeSQL(cleanString, "mysql")
+		cleanString := SanitizeSQL(v, "mysql")
+		cleanString = p.Sanitize(cleanString)
 		cleanString = sanitizeInput(cleanString)
 		return cleanString
 	case time.Time:
@@ -44,8 +39,9 @@ func SanitizeData(input interface{}) interface{} {
 	}
 }
 
-// sanitizeSQL sanitizes input string against SQL injection.
+// SanitizeSQL sanitizes input string against SQL injection.
 // It replaces single quotes with double single quotes to escape them.
+// It takes the input string and the database dialect as parameters.
 func SanitizeSQL(input string, dialect string) string {
 	var sanitized strings.Builder
 	var lastChar rune
@@ -86,17 +82,65 @@ func SanitizeSQL(input string, dialect string) string {
 	return sanitized.String()
 }
 
-// below function not required as we have used sanitize.html function after caling this function.
+// sanitizeInput sanitizes input string by removing non-alphanumeric characters.
+// It replaces HTML entities with their respective characters.
+// It returns the sanitized input string.
 func sanitizeInput(input string) string {
 	// Replace HTML entities with their respective characters
 	input = html.UnescapeString(input)
-
 	// Define regular expression pattern to allow only alphanumeric characters, space, dash, digits, and parentheses
-	regexPattern := regexp.MustCompile(`[^\s\w\-\(\)!]`)
-	//[^\s\w\-\(\)!] matches any character that is not a whitespace (\s), word character (\w), hyphen (\-), left parenthesis (\(), right parenthesis (\)), or exclamation mark (!).
+	regexPattern := regexp.MustCompile(`[^a-zA-Z0-9()\-!\[\]/\s]`)
+	// [^a-zA-Z0-9()\-!\[\]/\s] matches any character that is not alphanumeric, space, dash, parentheses, exclamation mark, or square brackets.
 
 	// Replace any characters not matching the pattern with an empty string
 	sanitizedInput := regexPattern.ReplaceAllString(input, "")
-
+	// Replace multiple spaces with a empty string
+	sanitizedInput = strings.Join(strings.Fields(sanitizedInput), " ")
+	// Replace multiple spaces with a single space
 	return sanitizedInput
+}
+
+// SanitizeUsername sanitizes input username against SQL injection and XSS attacks.
+// It first sanitizes against SQL injection using SanitizeSQL,
+// then sanitizes using bluemonday.StrictPolicy() to prevent XSS attacks.
+// It returns the sanitized username.
+func SanitizeUsername(input string) string {
+	p := bluemonday.StrictPolicy()
+	// Sanitize against SQL injection and XSS attacks
+	cleanString := SanitizeSQL(input, "mysql")
+	cleanString = p.Sanitize(cleanString)
+	// Clean username by removing non-alphanumeric characters
+	cleanString = cleanUsername(cleanString)
+	return cleanString
+}
+
+// SanitizePassword sanitizes input password against SQL injection and XSS attacks.
+// then sanitizes using bluemonday.StrictPolicy() to prevent XSS attacks.
+// It returns the sanitized password.
+func SanitizePassword(input string) string {
+	cleanString := cleanPassword(input)
+	return cleanString
+}
+
+// cleanUsername sanitizes input username by removing non-alphanumeric characters.
+// It replaces HTML entities with their respective characters.
+// It returns the sanitized username.
+func cleanUsername(input string) string {
+	// Replace HTML entities with their respective characters
+	input = html.UnescapeString(input)
+	// Define regular expression pattern to allow only alphanumeric characters
+	regexPattern := regexp.MustCompile(`[^a-zA-Z0-9.]`)
+	// Replace any characters not matching the pattern with an empty string
+	sanitizedInput := regexPattern.ReplaceAllString(input, "")
+	sanitizedInput = strings.Join(strings.Fields(sanitizedInput), " ")
+	return sanitizedInput
+}
+
+// sanitizePassword removes unnecessary characters from a password
+func cleanPassword(password string) string {
+	// Define a regular expression pattern to match allowed characters
+	allowedCharsPattern := regexp.MustCompile(`[^a-zA-Z0-9!"#$%&'()*+,\-./:;<=>?@[\\]^_{|}~]`)
+	// Remove disallowed characters from the password
+	cleanPassword := allowedCharsPattern.ReplaceAllString(password, "")
+	return cleanPassword
 }

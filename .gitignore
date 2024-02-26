@@ -2,6 +2,7 @@ app
 aarushishop.code-workspace
 aarushishop
 Dockerfile
+cert
 frontend
 fly.toml
 .vscode

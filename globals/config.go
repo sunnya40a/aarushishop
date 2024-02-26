@@ -10,12 +10,18 @@ import (
 	"time"
 )
 
+// for strong session
+var Charsets = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
+
 var CopyrightYear = time.Now().Year()
 
 // For session
 var Secret = []byte("sCc6ef3WBLjZ3@rtqGhMhGCMGuDqYgfHS9Y&Pi5mSjpyfIgbsc_fg05Duc3x2dH4E9IfpyKlHXCy5XhiGF0s5A")
+
+// var Charsets = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
 var JwtSecretKey = []byte("ui5uJjqWVZxDd21vDLoB7_18tKRmFn&XYcyxuPw@XPAHt65bmfHzit8blm3c9G53QdOiAK1wRTxhjGY70lLQbw")
 var RefreshSecretKey = []byte("51tEObTgkqhGvJhpT_MwspZwAMk&NiHb9DoWAKFFSq5d7G8rwy4tuKrOvRS2bP4S5+RrK@G1fJtR5ZpbYRBaMA")
+
 const UserKey = "user"
 
 // AppConfig stores the application configuration.

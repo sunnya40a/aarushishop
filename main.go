@@ -35,7 +35,7 @@ func main() {
 
 	// Enable CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:8000", "http://localhost:5173"},
+		AllowOrigins:     []string{"https://localhost:8000", "http://localhost:8000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Refreshtoken", "Authorization", "Content-Length", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -119,12 +119,19 @@ func main() {
 		Addr:    "0.0.0.0:8000",
 		Handler: router,
 	}
-
+	//below is with certificate
 	go func() {
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		// Listen and serve HTTPS
+		if err := server.ListenAndServeTLS("./cert/localhost.crt", "./cert/localhost.key"); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
 	}()
+	//below is without certificate
+	// go func() {
+	// 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	// 		log.Fatalf("Server error: %v", err)
+	// 	}
+	// }()
 
 	signalChannel := make(chan os.Signal, 1)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
