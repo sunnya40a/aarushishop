@@ -59,7 +59,7 @@ func main() {
 	})
 
 	router.Use(applySecurityHeaders(secureMiddleware))
-
+	//router.Use(applyHSTSHeader())
 	// Serve static files
 	router.GET("/assets/*filepath", func(c *gin.Context) {
 		filepath := "frontend/assets" + c.Param("filepath")
@@ -171,6 +171,24 @@ func applySecurityHeaders(secureMiddleware *secure.Secure) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+//Below function is to enable HSTS and it should be enable after valid certificate.
+// func applyHSTSHeader() gin.HandlerFunc {
+// 	return func(c *gin.Context) {
+// 		// Set Strict-Transport-Security header
+// 		c.Header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+
+// 		// Check if the request is over HTTP and redirect to HTTPS if necessary
+// 		if c.Request.TLS == nil {
+// 			host := c.Request.Host
+// 			url := "https://" + host + c.Request.URL.Path
+// 			c.Redirect(http.StatusMovedPermanently, url)
+// 			c.Abort()
+// 		} else {
+// 			c.Next()
+// 		}
+// 	}
+// }
 
 func getContentType(filename string) string {
 	switch {
