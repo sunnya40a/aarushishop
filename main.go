@@ -37,7 +37,7 @@ func main() {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"https://localhost:8000", "http://localhost:8000", "http://localhost:5173"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Refreshtoken", "Authorization", "Content-Length", "Content-Type"},
+		AllowHeaders:     []string{"Origin", "Refreshtoken","X-CSRF-Token", "Authorization", "Content-Length", "Content-Type"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -101,8 +101,8 @@ func main() {
 		c.Data(http.StatusOK, contentType, content)
 	})
 
-	store := cookie.NewStore(globals.Secret)
-	router.Use(sessions.Sessions("my-session", store))
+	store := cookie.NewStore([]byte(globals.Secret)) // Use secret key for signing
+	router.Use(sessions.Sessions("mysession", store))
 
 	// Public routes
 	public := router.Group("/")

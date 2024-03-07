@@ -2,7 +2,6 @@
 package middleware
 
 import (
-	"log"
 	"strings"
 
 	"aarushishop/globals"
@@ -40,7 +39,7 @@ func AuthMiddlewareAPIJWT() gin.HandlerFunc {
 			return
 		}
 
-		log.Printf("JWT Middleware activated")
+		//log.Printf("JWT Middleware activated")
 		c.Set("username", claims.Username)
 		c.Next()
 	}

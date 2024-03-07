@@ -11,12 +11,13 @@ import (
 )
 
 // for strong session
-var Charsets = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
+//var Charsets = ("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
 
 var CopyrightYear = time.Now().Year()
 
 // For session
-var Secret = []byte("sCc6ef3WBLjZ3@rtqGhMhGCMGuDqYgfHS9Y&Pi5mSjpyfIgbsc_fg05Duc3x2dH4E9IfpyKlHXCy5XhiGF0s5A")
+var Secret = ("sCc6ef3WBLjZ3@rtqGhMhGCMGuDqYgfHS9Y&Pi5mSjpyfIgbsc_fg05Duc3x2dH4E9IfpyKlHXCy5XhiGF0s5A")
+var SessionSalt = ("sCc6ef3WfLjZ3@rtqGhMhGCMGaDdYgfHS9Y&fi5mSjpyfIgbsc_fg05Duc3x2dH4E9IfpyKlHXCy5XhiGF0s5A")
 
 // var Charsets = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()")
 var JwtSecretKey = []byte("ui5uJjqWVZxDd21vDLoB7_18tKRmFn&XYcyxuPw@XPAHt65bmfHzit8blm3c9G53QdOiAK1wRTxhjGY70lLQbw")
